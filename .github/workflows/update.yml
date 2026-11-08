@@ -1,0 +1,66 @@
+name: Kurse aktualisieren und Seite veröffentlichen
+
+on:
+  schedule:
+    # Freitag 22:30 UTC, nach US-Börsenschluss (Sommer 20:00, Winter 21:00 UTC): die Woche ist abgeschlossen.
+    - cron: "30 22 * * 5"
+    # Samstag früh als Rückfall, falls der Freitagslauf ausfiel oder Yahoo noch Lücken hatte.
+    - cron: "15 6 * * 6"
+  workflow_dispatch:        # manueller Start über den Reiter "Actions"
+  push:
+    branches: [main]        # jede Änderung an der App wird sofort veröffentlicht
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: Abhängigkeiten installieren
+        run: pip install -r scripts/requirements.txt
+
+      - name: Rechenkern prüfen
+        run: |
+          python tests/test_core.py
+          python tests/test_assemble.py
+
+      - name: Kursdaten holen und Wochen-Turtle-Kennzahlen rechnen
+        run: python scripts/fetch_data.py
+        env:
+          OUT_DIR: public/data
+          # MIN_PRICE: "5"          # Mindestkurs in USD
+          # MIN_AVG_VOL: "100000"   # Mindest-Durchschnittsvolumen (50 Tage)
+          # INDEXES: "SP500,NDX"      # R2000 optional anhängen
+
+      - name: Seite zusammenstellen
+        run: cp site/index.html public/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

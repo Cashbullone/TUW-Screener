@@ -1,0 +1,6 @@
+# Sektor je Aktie, nur für Werte, die weder die Indexliste noch Yahoo kennt.
+# Eine Zeile je Aktie: TICKER,Sektor   (Sektor möglichst als GICS-Name, z. B. Information Technology,
+# Health Care, Financials, Consumer Discretionary, Consumer Staples, Communication Services,
+# Industrials, Energy, Materials, Utilities, Real Estate). Zeilen mit # davor sind Kommentare.
+# Beispiel:
+# ASML,Information Technology

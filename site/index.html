@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TUW-Screener</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#eef1ec;--card:#fbfcfa;--tx:#17211b;--mut:#5b675f;--bd:#d3dad2;--ok:#1b7a4f;--okbg:#dcefe3;--bad:#b3392f;--badbg:#f6dcd8;--warn:#9a6a12;--warnbg:#f4e8c9;--ac:#17211b;--acx:#fbfcfa;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#131a15;--card:#1b241e;--tx:#e8eee9;--mut:#98a69c;--bd:#2c382f;--ok:#4cc38a;--okbg:#1d3a2a;--bad:#ef7b6e;--badbg:#4a2420;--warn:#e2b552;--warnbg:#3a3014;--ac:#e8eee9;--acx:#131a15;color-scheme:dark}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+h1{font:700 28px/1.15 Georgia,"Times New Roman",serif;margin:8px 0 4px}
+h2{font-size:17px;margin:0 0 12px}
+h3{font-size:15px;margin:14px 0 6px}
+.mut{color:var(--mut)}.small{font-size:13px}
+section{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;margin:16px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:12px}
+label{display:block;font-size:14px;color:var(--mut)}
+input,textarea,select{display:block;width:100%;margin-top:4px;padding:10px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:6px}
+textarea{font-size:13px;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+button{font:inherit;font-weight:600;padding:10px 16px;border-radius:6px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer}
+button.pri{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+button.sm{padding:3px 10px;font-size:13px}
+.sum{font-size:15px;margin:0 0 6px}
+.card{border-top:1px solid var(--bd);padding:14px 0}
+.card:first-of-type{border-top:0}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tk{font:700 21px Georgia,serif}
+.cn{font-size:14px;color:var(--mut);margin-left:6px}
+.badge{display:inline-block;font-size:12.5px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--bd);color:var(--mut);margin-right:4px}
+.badge.ok{background:var(--okbg);color:var(--ok)}.badge.w{background:var(--warnbg);color:var(--warn)}.badge.bad{background:var(--badbg);color:var(--bad)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;font-size:13px;color:var(--mut);margin:10px 0}
+.kv b{display:block;color:var(--tx);font-size:15px}
+.note{font-size:14px;margin:6px 0}
+.note.bad{color:var(--bad)}.note.w{color:var(--warn)}.note.ok{color:var(--ok)}
+.box{border-radius:8px;padding:10px 12px;font-size:14px;background:var(--okbg);margin:8px 0}
+.box.w{background:var(--warnbg)}.box.bad{background:var(--badbg)}.box.n{background:var(--bg);border:1px solid var(--bd)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);text-align:left;padding:4px 8px 6px 0;font-weight:600}
+td{padding:6px 8px 6px 0;border-top:1px solid var(--bd);vertical-align:top}
+td.r,th.r{text-align:right;white-space:nowrap}
+.eur{color:var(--mut);font-weight:400}
+.tbl{overflow-x:auto}
+.ft td{padding:3px 8px 3px 0;border-top:0;font-size:13px}
+details{font-size:14px;color:var(--mut)}summary{cursor:pointer;color:var(--tx);font-weight:600}
+details p{margin:8px 0}
+#msg,#hmsg,#bkm{white-space:pre-line}
+.chips{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 10px}
+.chips label{display:flex;gap:6px;align-items:center;color:var(--tx)}
+.chips input{width:auto;margin:0}
+a{color:var(--ok)}
+@media(max-width:640px){
+.sheet,.sheet tbody{display:block}
+.sheet thead{display:none}
+.sheet tr{display:grid;grid-template-columns:1fr auto auto;gap:2px 12px;padding:8px 0;border-top:1px solid var(--bd)}
+.sheet tr:first-child{border-top:0}
+.sheet td{border:0;padding:0}
+.sheet td:nth-child(1){grid-column:1/-1;font-size:13px;color:var(--mut)}
+.sheet td:nth-child(2){grid-column:1}
+.sheet td:nth-child(3){grid-column:2;font-weight:600}
+.sheet td:nth-child(4){grid-column:3}
+.sheet td:nth-child(4)::after{content:' Stück'}
+.sheet td:nth-child(5){grid-column:1/-1}
+}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sec-h select{width:auto;margin:0;padding:6px 8px}
+</style></head><body><main>
+<h1>TUW-Screener</h1>
+<p class="mut" style="margin:0">Folgt nur den Regeln der Turtle-Händler: Volatilitätsmaß N, Ausbrüche über 20 und 55 Wochen auf Wochenkerzen, Stop bei 2 N, Zukauf alle ½ N, feste Limits. Du prüfst am Freitagabend und setzt die Orders am Montag.</p>
+<p id="dstat" class="small" style="margin:8px 0 0" role="status"></p>
+
+<section id="sheetsec"><h2>Orderzettel für Montag</h2><div id="sheet"></div></section>
+
+<section id="depotsec"><h2>Depot</h2>
+<p id="dsum" class="sum"></p>
+<div id="dlist"></div>
+<details id="addbox" style="margin-top:12px"><summary>Kauf eintragen</summary>
+<div class="grid" style="margin-top:12px">
+<label>Ticker<input id="ht" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="z. B. NVDA"></label>
+<label>Richtung<select id="hd"><option value="1">Long</option><option value="-1">Short</option></select></label>
+<label>System<select id="hs"><option value="1">System 1 (Ausstieg 10 Wochen)</option><option value="2">System 2 (Ausstieg 20 Wochen)</option></select></label>
+<label>Kaufdatum<input id="hdate" type="date"></label>
+<label>Währung des Kaufkurses<select id="hc"><option value="EUR">EUR</option><option value="USD">USD</option></select></label>
+<label>Kaufkurs<input id="hp" type="number" inputmode="decimal" min="0" step="any"></label>
+<label id="hxl">Wechselkurs beim Kauf (USD je 1 EUR)<input id="hx" type="number" inputmode="decimal" min="0" step="0.0001"></label>
+<label>Stück<input id="hq" type="number" inputmode="decimal" min="0" step="any"></label>
+<label>N beim Kauf (optional, in der gewählten Währung)<input id="hn" type="number" inputmode="decimal" min="0" step="any"></label>
+</div>
+<div class="row" style="margin-top:0"><button id="hsave" class="pri">Kauf eintragen</button></div>
+<p id="hmsg" class="mut small" role="status" style="margin:10px 0 0"></p>
+<p class="mut small">Den Kaufkurs trägst du wahlweise in EUR oder USD ein (Auswahlfeld, vorbelegt mit der Depotwährung aus den Einstellungen). Bei EUR rechnet die App ihn mit dem Wechselkurs beim Kauf in USD um, weil Stops und N in USD berechnet werden. Das Feld ist mit dem aktuellen Kurs vorbelegt, ändere es, wenn der Kauf länger zurückliegt. Der Gewinn zeigt bei EUR-Käufen die Wechselkursänderung seit dem Kauf mit. Jeder Kauf zählt als eine Einheit. Für einen Zukauf trägst du denselben Ticker noch einmal ein, Richtung und System übernimmt die App von der bestehenden Position. „N beim Kauf“ brauchst du nur, wenn der Kauf vor dem Beginn der Kursreihe (etwa 100 Wochen) lag, sonst liest die App N aus den Daten.</p></details></section>
+
+<section id="newsec"><div class="sec-h"><h2>Neue Einstiege</h2>
+<label class="small" style="display:flex;gap:6px;align-items:center">Sortierung<select id="sort"><option value="dist">Nähe zur Marke</option><option value="sec">Sektor</option><option value="t">Ticker</option><option value="dv">Handelsumsatz</option></select></label></div>
+<div id="ixbox" class="chips"></div>
+<div id="newlist"></div></section>
+
+<section id="todaysec"><h2>In der letzten Woche ausgelöste Ausbrüche</h2><div id="todaylist"></div></section>
+
+<section><h2>Einstellungen</h2><div id="settings"></div>
+<p class="mut small" style="margin:0">Alle Eingaben bleiben nur in diesem Browser. Die Standardwerte der Turtle-Regeln stehen unter „So rechnet die App“. Was Annahme ist und was aus den Quellen stammt, steht dort ebenfalls.</p></section>
+
+<section><h2>Kursdaten</h2>
+<div class="row" style="margin-top:0"><button id="reload" class="pri">Daten neu laden</button></div>
+<p class="mut small">Die Seite holt die täglich von GitHub aktualisierten Daten selbst. Eine <code>prices.json</code> kannst du auch von Hand laden (zum Beispiel zum Testen):</p>
+<label style="max-width:360px">prices.json laden<input id="pfile" type="file" accept=".json,application/json"></label>
+<p id="msg" class="mut small" role="status" style="margin:10px 0 0"></p></section>
+
+<section><h2>Sicherung</h2>
+<p class="mut small" style="margin:0 0 8px">Depot und Einstellungen liegen nur in diesem Browser. Sichere sie als Datei, damit sie bei gelöschtem Browser-Speicher oder einem Gerätewechsel nicht verloren gehen.</p>
+<div class="row" style="margin-top:0"><button id="bkx" class="pri">Depot exportieren</button><button id="bki">Depot importieren</button><input id="bkf" type="file" accept=".json,application/json" hidden></div>
+<details style="margin-top:10px"><summary>Als Text kopieren oder einfügen</summary>
+<textarea id="bkt" rows="5" aria-label="Sicherung als Text" placeholder="Hier erscheint der Sicherungstext, oder füge einen gesicherten Text ein."></textarea>
+<div class="row"><button id="bkc">Text erzeugen</button><button id="bkp">Text importieren</button></div></details>
+<p id="bkm" class="mut small" role="status" style="margin:10px 0 0"></p></section>
+
+<details style="margin-bottom:8px"><summary>So rechnet die App</summary>
+<h3>Die Regeln</h3>
+<p><b>N</b> ist die durchschnittliche wöchentliche Schwankungsbreite einer Aktie in Dollar: der Wilder-Durchschnitt der True Range über 20 Wochen, N = (19 × N der Vorwoche + True Range der Woche) ÷ 20. Die True Range ist der größte der Werte Wochenhoch − Wochentief, |Wochenhoch − Vorwochenschluss| und |Wochentief − Vorwochenschluss|. Der erste N-Wert ist der einfache Mittelwert der ersten 20 True Ranges.</p>
+<p><b>Einheit:</b> Stück = Depot × Risiko ÷ N. Mit dem Original-Risiko von 1 % bedeutet eine Bewegung um 1 N einen Wert von 1 % des Depots. Der Stop liegt 2 N vom Einstieg entfernt, eine Einheit riskiert also etwa 2 % des Depots.</p>
+<p><b>System 1:</b> Einstieg, wenn der Kurs das Hoch der letzten 20 Wochen übersteigt (Short: das Tief unterschreitet). Ausstieg beim Tief der letzten 10 Wochen (Short: Hoch). <b>Überspringen:</b> War der letzte System-1-Trade ein Gewinner, wird der nächste System-1-Ausbruch übersprungen. Der übersprungene Trade wird trotzdem gedanklich weiterverfolgt, denn sein Ausgang entscheidet über den übernächsten Ausbruch.</p>
+<p><b>System 2:</b> Einstieg beim Bruch des 55-Wochen-Hochs (Short: -Tiefs), Ausstieg beim 20-Wochen-Tief (Short: -Hoch). Es gibt keine Überspring-Regel. System 2 fängt Trends auf, bei denen System 1 übersprungen wurde.</p>
+<p><b>Stop und Zukauf:</b> Der Stop liegt 2 N unter dem Einstieg (Short: darüber). Steigt der Kurs um ½ N über den letzten Kaufkurs, kommt eine weitere Einheit dazu, bis zu vier. Nach jedem Zukauf rücken alle Stops auf 2 N unter den neuen Kaufkurs. Verkauft wird, sobald der Kurs den Stop oder die Ausstiegsmarke (10 oder 20 Wochen) berührt, je nachdem, welche höher liegt (Short: tiefer).</p>
+<p><b>Limits:</b> höchstens 4 Einheiten je Markt, 6 in eng verwandten, 10 in lose verwandten Märkten und 12 in einer Richtung.</p>
+<h3>Was die App daraus für Aktien macht</h3>
+<p><b>EUR-Werte:</b> Alle Kurse, Marken und Stops stehen in USD und daneben in EUR. Die EUR-Zahl ist die USD-Zahl geteilt durch den Wechselkurs aus den Kursdaten (steht unter „Einstellungen“ als Rückfall, falls die Daten keinen enthalten). Ein Handelsplatz in Euro wie gettex stellt eigene EUR-Kurse, die leicht abweichen können.</p>
+<p>Berechnet wird mit Wochenkerzen (Montag bis Freitag). Ein Ausbruch gilt, wenn das Wochenhoch (Short: Wochentief) die Marke der Vorwochen übersteigt. Wir nehmen an, dass eine Kauf-Stop-Order genau an der Marke gefüllt wird, bei einer Kurslücke über die Marke zum Eröffnungskurs. In der Wirklichkeit weichen Füllkurse davon ab. Die Marken für die neue Woche schließen die gerade beendete Woche ein. Der Orderzettel zeigt deshalb für jede Aktie die Marke, an der du am Montag eine Stop-Order für die ganze Woche setzt. Die Prüfung machst du nach dem Freitagsschluss, die Daten dafür liegen am Freitagabend (MEZ) bereit. Stop-Orders gelten innerhalb der Woche, ein Ausbruch am Dienstag wird also auch am Dienstag gefüllt, nicht erst am nächsten Montag. Das Wochenhoch kann dabei über der Marke liegen: Eine Kauf-Stop-Order füllt am Marktpreis, sobald die Marke erreicht ist, bei Kurslücken darüber.</p>
+<p><b>Skip-Regel:</b> Das Skript spielt für jede Aktie über etwa zwei Jahre alle System-1-Trades auf Wochenbasis als Einheit mit 2-N-Stop und 10-Wochen-Ausstieg durch, auch die, die du nicht gehandelt hast. Ein Trade ist ein Gewinner, wenn der Ausstiegskurs über dem Einstiegskurs liegt. Zukäufe, die in deiner echten Position den Stop nachgezogen haben, bildet die Rechnung nicht ab. Beginn der Rechnung ist der Anfang der Kursreihe, ein erster Trade kann deshalb vom echten Verlauf abweichen. Danach gleicht sich der Zustand an.</p>
+<p><b>Depot:</b> Die App spielt jede eingetragene Position Woche für Woche nach. Der Stop gilt ab der Woche nach jedem Kauf bei Kaufkurs ∓ 2 N, wobei N der Wert der Vorwoche des Kaufs ist. Innerhalb der Kaufwoche prüft die App den Stop nicht, trage den Stop dort selbst als Order ein. Berührt ein Tief (Short: Hoch) die höhere (Short: tiefere) Marke aus Stop und Ausstiegskanal, meldet die App „Ausstieg ausgelöst“. Die Kursreihe umfasst etwa 100 Wochen. Bei älteren Positionen prüft die App nur diesen Zeitraum.</p>
+<p><b>Grenzen:</b> Die Obergrenze für Sektor (Standard 6 Einheiten) und für eine Richtung (12) übernimmt die Turtle-Limits. Dass ein Sektor als „eng verwandter Markt“ gilt, ist meine Annahme, weil die Quellen Futures behandeln. Die Orderliste füllt die Plätze der Reihe nach, zuerst Verkaufs-Stops, dann Zukäufe, dann neue Einstiege nach Nähe zur Marke. Ist ein Limit oder das Depot voll, erscheint die Aktie mit dem Grund unter „nicht berücksichtigt“.</p>
+<h3>Anpassungen für Aktien (nicht von den Turtles)</h3>
+<p>Die Turtles handelten gehebelte Futures. Bei Aktien ohne Hebel führt das Original-Risiko von 1 % je Einheit zu riesigen Positionen: Bei einem N von 2 % des Kurses wäre eine Einheit schon 50 % des Depots. Die App startet deshalb mit 0,25 % Risiko je Einheit und begrenzt zusätzlich den Anteil einer Aktie am Depot (25 %) und die Summe aller Positionen (100 %). Beides lässt sich in den Einstellungen ändern. Wer 1 % und höhere Grenzen einträgt, rechnet gehebelt.</p>
+<p>Short ist standardmäßig aus (Einstellung „Short-Signale zeigen“). Die Datei enthält die Short-Seite immer. Mindestkurs und Mindest-Tagesumsatz filtern nur die Liste neuer Einstiege.</p>
+<h3>Was beim Wochenrhythmus anders ist</h3>
+<p>Die Turtle-Regeln laufen hier auf Wochenkerzen: 20 Wochen entsprechen etwa 100 Handelstagen, 55 Wochen etwa einem Jahr. Dadurch ist N größer als im Tages-Screener, die Stops sitzen weiter weg, die Einheiten fallen kleiner aus und es gibt weniger Signale. Die laufende Woche zählt nie: Die App rechnet nur mit abgeschlossenen Wochen bis zum Freitagsschluss. Fällt der Freitag auf einen Börsenfeiertag, erscheint die Woche erst in den Daten, wenn die nächste begonnen hat. Der Mindest-Tagesumsatz bleibt ein Tageswert (Durchschnitt der letzten 50 Handelstage).</p>
+<h3>Nicht aus dem Originaldokument bestätigt</h3>
+<p>Die Regeln oben stammen aus Beschreibungen von Curtis Faith („Way of the Turtle“, zitiert in einer Forendiskussion), einem MQL5-Artikel und einer Zusammenfassung von therighttrader.com. Das Originalregelwerk der Turtles konnte ich nicht abrufen. Nicht bestätigt sind: die Kürzung des Rechendepots nach Verlusten (die Angaben dazu schwanken, deshalb ist sie hier eine freie Einstellung, Standard 0), die genaue Definition von „Gewinner“ beim Überspringen (hier: Ausstieg über Einstieg) und die Frage, ob der Zukauf-Abstand ½ N vom letzten Kaufkurs oder vom Einstieg gerechnet wird (hier: vom letzten Kaufkurs, wie in den Quellen beschrieben). Die Turtles verwendeten außerdem Futures, keine Aktien. Ob die Regeln heute bei Aktien noch Erfolg haben, zeigt diese App nicht, sie macht keinen Backtest.</p>
+<p>Quellen: <a href="https://www.mql5.com/en/articles/23448" rel="noopener">MQL5, The Original Turtle Trading Rules</a> · <a href="https://therighttrader.com/learn/trading-strategies/turtle-trading" rel="noopener">therighttrader.com, Turtle Trading</a> · <a href="https://elitetrader.com/et/threads/original-turtle-rules-interpretation.266360/" rel="noopener">Elitetrader, Original Turtle Rules Interpretation</a></p>
+<p class="mut small">Keine Anlageberatung. Kursdaten von Yahoo Finance, verzögert und ohne Gewähr.</p></details>
+</main>
+<script>
+const $=s=>document.querySelector(s),K='turtle_w1';
+const DEF={eq:50000,cur:'EUR',fx:1.08,cut:0,risk:0.25,stop:2,add:0.5,maxU:4,maxSec:6,maxDir:12,capPos:25,maxInv:100,s1:true,s2:true,skip:true,short:false,near:1,minP:10,minDV:20};
+let S={cfg:Object.assign({},DEF),pos:[],ixf:{SP500:true,NDX:true,R2000:true},sort:'dist'};
+try{const o=JSON.parse(localStorage.getItem(K)||'null');if(o){S.cfg=Object.assign({},DEF,o.cfg);S.pos=Array.isArray(o.pos)?o.pos:[];S.ixf=Object.assign(S.ixf,o.ixf);S.sort=o.sort||'dist'}}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify({cfg:S.cfg,pos:S.pos,ixf:S.ixf,sort:S.sort}))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fd=(n,d)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const f2=n=>fd(n,2),f1=n=>fd(n,1),f0=n=>fd(n,0);
+const eur2=n=>f2(n/fxr())+' €';
+const px=n=>f2(n)+' $ / '+eur2(n);
+// Für den Orderzettel: USD oben, EUR darunter. pm() setzt Marker, cur2() zerlegt den Text in die USD- und die EUR-Fassung.
+const pm=n=>'\u0001'+f2(n)+' $\u0002'+eur2(n)+'\u0003';
+const cur2=t=>{const re=/\u0001(.*?)\u0002(.*?)\u0003/g;return [String(t).replace(re,'$1'),String(t).replace(re,'$2')]};
+const dDE=u=>new Date(u*864e5).toLocaleDateString('de-DE',{timeZone:'UTC',day:'2-digit',month:'2-digit',year:'numeric'});
+const SECDE={'Communication Services':'Kommunikation','Consumer Discretionary':'Zyklischer Konsum','Consumer Staples':'Basiskonsum','Energy':'Energie','Financials':'Finanzen','Health Care':'Gesundheit','Industrials':'Industrie','Information Technology':'Technologie','Materials':'Rohstoffe','Real Estate':'Immobilien','Utilities':'Versorger'};
+const secName=k=>k?(SECDE[k]||k):'Sektor unbekannt';
+const IXN={SP500:'S&P 500',NDX:'Nasdaq-100 (ohne S&P-Werte)',R2000:'Russell 2000'};
+let D=null,BY={},EV=[],HOLD=null;
+const setMsg=t=>{$('#msg').textContent=t};
+
+/* ---------- Geld und Größen ---------- */
+const fxr=()=>(D&&D.fx>0)?D.fx:(S.cfg.fx>0?S.cfg.fx:1.08);
+const toUsd=v=>S.cfg.cur==='EUR'?v*fxr():v;
+const fromUsd=v=>S.cfg.cur==='EUR'?v/fxr():v;
+const M=v=>f0(fromUsd(v))+(S.cfg.cur==='EUR'?' €':' $');
+const eqFull=()=>toUsd(+S.cfg.eq||0);
+const eqSize=()=>eqFull()*(1-(+S.cfg.cut||0)/100);
+const unitShares=(N,eq)=>N>0?Math.floor((+S.cfg.risk||0)/100*(eq===undefined?eqSize():eq)/N):0;
+
+/* ---------- Kursreihen ---------- */
+const lastI=()=>D.dates.length-1;
+function priorLvl(st,k,long){          // Hoch (Tief) der k Wochen vor der letzten Woche
+  const n=st.h.length;let r=NaN;
+  for(let i=n-1-k;i<n-1;i++){const v=long?st.h[i]:st.l[i];if(v==null)continue;r=isNaN(r)?v:(long?Math.max(r,v):Math.min(r,v))}
+  return r;
+}
+function dayIdx(ds){
+  const u=Math.floor(Date.parse(ds+'T00:00:00Z')/864e5),k=D.dates.findIndex(x=>x>=u);
+  return k<0?D.dates.length:k;
+}
+function fillN(st,fl,k){
+  if(+fl.n>0)return{v:+fl.n,approx:false};
+  if(k>=1&&k<=D.dates.length){const v=st.a[k-1];if(v>0)return{v,approx:false}}
+  return{v:st.N,approx:true};
+}
+
+/* ---------- Einstiegsplan einer Aktie ---------- */
+function s1State(st,dir){const f=st.f[dir>0?0:1];return{last:f[0],open:f[1],taken:f[2]}}
+function entryPlan(st,dir){
+  const c=S.cfg,L=dir>0,f=s1State(st,dir);
+  const l1=L?st.hh[1]:st.ll[1],l2=L?st.hh[2]:st.ll[2];
+  const s1ok=c.s1&&f.open===0&&!(c.skip&&f.last==='W');
+  const blocked=c.s1&&f.open===0&&c.skip&&f.last==='W';
+  const running=c.s1&&f.open!==0;
+  let sys=0,lvl=null;
+  if(s1ok){sys=1;lvl=l1}else if(c.s2){sys=2;lvl=l2}
+  if(!sys)return null;
+  const exitL=sys===1?(L?st.ll[0]:st.hh[0]):(L?st.ll[1]:st.hh[1]);
+  const dist=(L?lvl-st.p:st.p-lvl)/st.N;
+  return{sys,lvl,l1,l2,same:l1===l2,s1ok,blocked,running,f,exitL,dist,N:st.N,stop:lvl-dir*c.stop*st.N,add:lvl+dir*c.add*st.N};
+}
+
+/* ---------- Depot nachspielen ---------- */
+function evalPos(pos){
+  const st=BY[pos.t],d=pos.dir,L=d>0,o={pos,st,d,L};
+  const fills=pos.fills.slice().sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
+  o.fills=fills;o.units=fills.length;o.q=fills.reduce((s,f)=>s+f.q,0);o.cost=fills.reduce((s,f)=>s+f.q*f.p,0);o.avg=o.q?o.cost/o.q:0;
+  o.costE=fills.reduce((s,f)=>s+f.q*(f.ec==='EUR'&&f.ev>0?f.ev:f.p/fxr()),0);   // Einstand in EUR: bei EUR-Käufen der eingetragene Kurs, sonst USD zum heutigen Kurs
+  if(!st||!D){o.err='Keine Kursdaten für diesen Ticker';o.value=o.cost;return o}
+  const n=D.dates.length,last=n-1,kOut=pos.sys===1?10:20,sm=+S.cfg.stop;
+  const fi=fills.map(f=>dayIdx(f.d)),fn=fills.map((f,j)=>fillN(st,f,fi[j]));
+  o.fi=fi;o.fn=fn;o.approx=fn.some(x=>x.approx);o.kOut=kOut;
+  o.price=st.p;o.value=o.q*st.p;
+  {const plE=(o.value/fxr()-o.costE)*d;o.pl=plE*fxr();o.plp=o.costE?plE/o.costE*100:0}   // Gewinn inklusive Wechselkurseffekt bei EUR-Käufen (in USD zum heutigen Kurs, die Anzeige rechnet in die Depotwährung um)
+  for(let i=Math.max(fi[0]+1,1);i<n;i++){
+    let j=-1;for(let q=0;q<fills.length;q++)if(fi[q]<i)j=q;
+    if(j<0)continue;
+    const stop=fills[j].p-d*sm*fn[j].v;
+    let ch=NaN;
+    if(i>=kOut)for(let x=i-kOut;x<i;x++){const v=L?st.l[x]:st.h[x];if(v==null)continue;ch=isNaN(ch)?v:(L?Math.min(ch,v):Math.max(ch,v))}
+    const lvl=isNaN(ch)?stop:(L?Math.max(stop,ch):Math.min(stop,ch));
+    const bar=L?st.l[i]:st.h[i];
+    if(bar==null)continue;
+    if(L?bar<=lvl:bar>=lvl){o.exit={i,date:D.dates[i],lvl,why:(isNaN(ch)||lvl===stop)?'stop':'chan'};break}
+  }
+  const j=fills.length-1,Nl=fn[j].v;
+  o.Nl=Nl;o.stop=fills[j].p-d*sm*Nl;
+  o.chan=pos.sys===1?(L?st.ll[0]:st.hh[0]):(L?st.ll[1]:st.hh[1]);
+  o.sell=L?Math.max(o.stop,o.chan):Math.min(o.stop,o.chan);
+  o.sellWhy=o.sell===o.stop?'stop':'chan';
+  o.addLvl=fills[j].p+d*S.cfg.add*Nl;
+  o.addHit=fi[j]<last&&(L?st.h[last]>=o.addLvl:st.l[last]<=o.addLvl);
+  o.risk=Math.max(0,fills.reduce((s,f)=>s+f.q*(f.p-o.stop)*d,0));
+  o.status=o.exit?'exit':(o.addHit&&o.units<S.cfg.maxU?'add':'ok');
+  return o;
+}
+
+/* ---------- Bestand und Limits ---------- */
+const newHold=()=>({units:{},secU:{L:{},S:{}},dirU:{L:0,S:0},val:0,valT:{}});
+const cloneHold=h=>JSON.parse(JSON.stringify(h));
+function addHold(H,t,dir,sec,units,val){
+  const s=dir>0?'L':'S';
+  H.units[t]=(H.units[t]||0)+units;H.dirU[s]+=units;
+  if(sec)H.secU[s][sec]=(H.secU[s][sec]||0)+units;
+  H.val+=val;H.valT[t]=(H.valT[t]||0)+val;
+}
+function buildHold(){
+  const H=newHold();
+  for(const e of EV)addHold(H,e.pos.t,e.d,e.st?e.st.sec:'',e.units,e.value||e.cost||0);
+  return H;
+}
+function limitMsgs(H,t,dir,sec){
+  const c=S.cfg,s=dir>0?'L':'S',m=[];
+  const uT=H.units[t]||0;if(uT+1>c.maxU)m.push('Obergrenze von '+c.maxU+' Einheiten je Aktie erreicht');
+  if(sec){const u=H.secU[s][sec]||0;if(c.maxSec>0&&u+1>c.maxSec)m.push('Sektor '+secName(sec)+': '+u+' von '+c.maxSec+' Einheiten belegt')}
+  const u=H.dirU[s];if(c.maxDir>0&&u+1>c.maxDir)m.push((dir>0?'Long':'Short')+': '+u+' von '+c.maxDir+' Einheiten belegt');
+  return m;
+}
+function sizeFor(H,N,price,t,sizeN){
+  const c=S.cfg,full=eqFull(),want=unitShares(sizeN===undefined?N:sizeN);
+  let q=want,by='';
+  if(want<=0)return{q:0,want:0,by:full>0?'Risiko je Einheit zu klein für dieses N':'Depotwert fehlt'};
+  if(c.capPos>0){const room=c.capPos/100*full-(H.valT[t]||0);if(q*price>room){q=Math.floor(Math.max(0,room)/price);by='Obergrenze je Aktie ('+c.capPos+' % vom Depot)'}}
+  if(c.maxInv>0){const room=c.maxInv/100*full-H.val;if(q*price>room){q=Math.floor(Math.max(0,room)/price);by='Investitionsgrenze ('+c.maxInv+' % vom Depot)'}}
+  return{q,want,by};
+}
+
+/* ---------- Kandidaten und Planung ---------- */
+const dvOf=st=>st.p*st.av;
+function candidates(){
+  const held=new Set(S.pos.map(p=>p.t)),out=[];
+  if(!D)return out;
+  for(const st of D.stocks){
+    if(held.has(st.t)||!(!st.ix||!st.ix.length||st.ix.some(k=>S.ixf[k]!==false)))continue;
+    if(st.p<S.cfg.minP||dvOf(st)<S.cfg.minDV*1e6)continue;
+    for(const dir of S.cfg.short?[1,-1]:[1]){
+      const pl=entryPlan(st,dir);
+      if(!pl||pl.dist>S.cfg.near)continue;
+      const tag=dir>0?'L':'S';
+      if(st.sg.includes('1'+tag)||st.sk.includes('1'+tag)||st.sg.includes('2'+tag))continue;     // steht unter „letzte Woche ausgelöst“
+      out.push({st,dir,pl});
+    }
+  }
+  const k=S.sort;
+  out.sort((a,b)=>k==='sec'?(a.st.sec||'~').localeCompare(b.st.sec||'~')||a.pl.dist-b.pl.dist:k==='t'?a.st.t.localeCompare(b.st.t):k==='dv'?dvOf(b.st)-dvOf(a.st):a.pl.dist-b.pl.dist);
+  return out;
+}
+function planAll(cands){
+  const H=cloneHold(HOLD),rows=[];
+  for(const e of EV){
+    if(e.err)continue;
+    if(e.exit)rows.push({k:0,t:e.pos.t,txt:'Verkaufen, Ausstieg ausgelöst',lvl:null,q:e.q,note:'Marke '+pm(e.exit.lvl)+' am '+dDE(e.exit.date)+' berührt'});
+    else rows.push({k:1,t:e.pos.t,txt:(e.L?'Verkaufs-Stop':'Rückkauf-Stop'),lvl:e.sell,q:e.q,note:(e.sellWhy==='stop'?'2-N-Stop':'Ausstieg '+e.kOut+' Wochen')+' (die '+(e.L?'höhere':'tiefere')+' Marke)'});
+  }
+  for(const e of EV){
+    if(e.err||e.exit)continue;
+    if(e.units>=S.cfg.maxU){e.add={blocked:['Obergrenze von '+S.cfg.maxU+' Einheiten je Aktie erreicht']};continue}
+    const msgs=limitMsgs(H,e.pos.t,e.d,e.st.sec),sz=sizeFor(H,e.st.N,e.addLvl,e.pos.t);
+    e.add={msgs,sz,newStop:e.addLvl-e.d*S.cfg.stop*e.st.N};
+    if(!msgs.length&&sz.q>0){rows.push({k:2,t:e.pos.t,txt:e.L?'Zukauf (Kauf-Stop)':'Zukauf (Verkaufs-Stop)',lvl:e.addLvl,q:sz.q,note:'neuer Stop für alle Einheiten '+pm(e.add.newStop)});addHold(H,e.pos.t,e.d,e.st.sec,1,sz.q*e.addLvl);e.add.ok=true}
+  }
+  const rej=[];
+  for(const c of cands){
+    const {st,dir,pl}=c,msgs=limitMsgs(H,st.t,dir,st.sec),sz=sizeFor(H,st.N,pl.lvl,st.t);
+    c.msgs=msgs;c.sz=sz;
+    if(!msgs.length&&sz.q>0){c.ok=true;rows.push({k:3,t:st.t,txt:(dir>0?'Einstieg (Kauf-Stop)':'Einstieg Short (Verkaufs-Stop)')+' S'+pl.sys,lvl:pl.lvl,q:sz.q,note:'Stop '+pm(pl.stop)+' · Ausstieg '+pm(pl.exitL)});addHold(H,st.t,dir,st.sec,1,sz.q*pl.lvl)}
+    else rej.push(c);
+  }
+  rows.sort((a,b)=>a.k-b.k);
+  return{rows,rej,H};
+}
+
+/* ---------- Anzeige ---------- */
+const badgeSys=(dir,sys)=>'<span class="badge '+(dir>0?'ok':'w')+'">'+(dir>0?'Long':'Short')+' · System '+sys+'</span>';
+const secBadge=st=>'<span class="badge">'+esc(secName(st.sec))+'</span>';
+const nameOf=st=>st.n&&st.n!==st.t?'<span class="cn">'+esc(st.n)+'</span>':'';
+const kv=(a,b)=>'<div>'+a+'<b>'+b+'</b></div>';
+
+function rStatus(){
+  const el=$('#dstat');
+  if(!D){el.innerHTML='<span class="note bad">Keine Kursdaten geladen. Unter „Kursdaten“ kannst du eine prices.json laden.</span>';return}
+  const age=Math.floor((Date.now()-Date.parse(D.asof+'T00:00:00Z'))/864e5);
+  const ixs=[...new Set(D.stocks.flatMap(s=>s.ix||[]))].map(k=>IXN[k]||k).join(', ');
+  el.innerHTML='Stand der Kurse: '+dDE(Math.floor(Date.parse(D.asof+'T00:00:00Z')/864e5))+' · '+D.stocks.length+' Aktien ('+esc(ixs)+')'+(age>10?' <span class="note bad">Die Daten sind '+age+' Tage alt (sie werden jeden Freitagabend erneuert). Prüfe die Automatik unter „Actions“ auf GitHub.</span>':'');
+}
+function rSheet(plan){
+  const box=$('#sheet');
+  if(!D){box.innerHTML='<p class="mut">Ohne Kursdaten gibt es keinen Orderzettel.</p>';return}
+  if(eqFull()<=0)return void(box.innerHTML='<p class="note w">Trage unter „Einstellungen“ deinen Depotwert ein, damit die App Stückzahlen rechnen kann.</p>');
+  let h='<p class="mut small" style="margin:0 0 8px">Stop-Orders, die du am Montag für die ganze Woche setzt (geprüft mit den Wochenkerzen bis zum Freitagsschluss). Reihenfolge: Verkäufe, Zukäufe, neue Einstiege nach Nähe zur Marke. Ein Einstieg ist nur dabei, wenn Limits und Depot ihn zulassen. Marken und Kurse stehen in USD, darunter in EUR (1 € = '+fd(fxr(),4)+' $). Auf gettex weicht der EUR-Kurs der Aktie leicht davon ab, prüfe die Marke dort vor dem Setzen der Order.</p>';
+  if(!plan.rows.length)h+='<p>Für die kommende Woche ist keine Order nötig. Keine Aktie liegt innerhalb von '+f1(S.cfg.near)+' N unter ihrer Einstiegsmarke, oder alle sind durch Limits gesperrt.</p>';
+  else{
+    h+='<div class="tbl"><table class="sheet"><thead><tr><th>Aktion</th><th>Aktie</th><th class="r">Stop-Buy</th><th class="r">Stück</th><th>Hinweis</th></tr></thead><tbody>';
+    for(const r of plan.rows){
+      const st=BY[r.t];
+      h+='<tr><td>'+(r.k===0?'<span class="badge bad">'+esc(r.txt)+'</span>':esc(r.txt))+'</td><td><b>'+esc(r.t)+'</b>'+(st?nameOf(st)+'<br><span class="mut small">'+esc(secName(st.sec))+'</span>':'')+'</td><td class="r">'+(r.lvl==null?'–':'<span class="usd">'+f2(r.lvl)+' $</span><br><span class="eur">'+eur2(r.lvl)+'</span>')+'</td><td class="r">'+f0(r.q)+'</td><td class="small">'+(()=>{const [u,e]=cur2(r.note);return esc(u)+(e!==u?'<br><span class="eur">'+esc(e)+'</span>':'')})()+'</td></tr>';
+    }
+    h+='</tbody></table></div>';
+  }
+  if(plan.rej.length)h+='<p class="mut small" style="margin:10px 0 0">Nicht berücksichtigt wegen Limits oder zu kleiner Einheit: '+plan.rej.length+' Aktie'+(plan.rej.length>1?'n':'')+' (Gründe in der Liste „Neue Einstiege“).</p>';
+  box.innerHTML=h;
+}
+function posCard(e){
+  const t=e.pos.t,st=e.st;
+  let h='<div class="card" data-t="'+esc(t)+'"><div class="top"><div><span class="tk">'+esc(t)+'</span>'+(st?nameOf(st):'')+'</div><div>'+(st?secBadge(st):'')+badgeSys(e.d,e.pos.sys)+'<span class="badge">'+e.units+' von '+S.cfg.maxU+' Einheiten</span>'+
+    (e.status==='exit'?'<span class="badge bad">Ausstieg</span>':e.status==='add'?'<span class="badge w">Zukauf möglich</span>':e.err?'<span class="badge w">ohne Kurse</span>':'<span class="badge ok">gehalten</span>')+'</div></div>';
+  if(e.err){h+='<p class="note w">'+esc(e.err)+'. Die Position zählt mit ihrem Kaufwert.</p>'}
+  else{
+    h+='<div class="kv">'+kv('Kurs',px(e.price))+kv('Ø Kaufkurs',f2(e.avg)+' $ / '+f2(e.costE/e.q)+' €')+kv('Gewinn/Verlust',(e.pl>=0?'+':'')+M(e.pl)+' ('+(e.plp>=0?'+':'')+f1(e.plp)+' %)')+kv('Wert',M(e.value))+kv('N aktuell',px(st.N))+'</div>';
+    if(e.exit)h+='<div class="box bad"><b>Ausstieg ausgelöst am '+dDE(e.exit.date)+'.</b> '+(e.L?'Das Tief':'Das Hoch')+' berührte '+px(e.exit.lvl)+' ('+(e.exit.why==='stop'?'2-N-Stop':'Ausstiegsmarke '+e.kOut+' Wochen')+'). Verkaufe, falls noch nicht geschehen, und entferne die Position unten.</div>';
+    else{
+      h+='<div class="kv">'+kv(e.L?'Verkaufs-Stop Montag':'Rückkauf-Stop Montag',px(e.sell))+kv('2-N-Stop',px(e.stop))+kv('Ausstieg '+e.kOut+' Wochen',px(e.chan))+kv('Zukauf-Marke',e.units>=S.cfg.maxU?'Maximum erreicht':px(e.addLvl))+kv('Risiko bis Stop',e.risk>0?M(e.risk)+' ('+f2(e.risk/(eqFull()||1)*100)+' %)':'Gewinn gesichert')+'</div>';
+      h+='<p class="note">Der Stop hängt am letzten Kauf ('+px(e.fills[e.fills.length-1].p)+', N = '+px(e.Nl)+').'+(e.sellWhy==='chan'?' Jetzt bestimmt der Ausstieg über '+e.kOut+' Wochen die Verkaufsmarke.':'')+'</p>';
+      if(e.addHit)h+='<div class="box w"><b>Zukauf-Marke '+px(e.addLvl)+' wurde in der letzten Woche erreicht.</b> '+(e.units>=S.cfg.maxU?'Die Obergrenze von '+S.cfg.maxU+' Einheiten ist erreicht.':e.add&&e.add.msgs&&e.add.msgs.length?'Gesperrt: '+esc(e.add.msgs.join('; ')):'Die nächste Marke steht im Orderzettel.')+'</div>';
+      else if(e.add&&e.add.msgs&&e.add.msgs.length)h+='<p class="note w">Zukauf bei '+px(e.addLvl)+' gesperrt: '+esc(e.add.msgs.join('; '))+'</p>';
+      else if(e.add&&e.add.sz&&e.add.sz.q<=0)h+='<p class="note w">Zukauf bei '+px(e.addLvl)+' nicht möglich: '+esc(e.add.sz.by||'Einheit zu klein')+'</p>';
+      else if(e.add&&e.add.ok)h+='<p class="note">Nächster Zukauf: '+f0(e.add.sz.q)+' Stück bei '+px(e.addLvl)+', danach Stop '+px(e.add.newStop)+' für alle Einheiten.</p>';
+    }
+    if(e.approx)h+='<p class="note w">Für mindestens einen Kauf lag N nicht in der Kursreihe vor, die App nimmt das heutige N. Trage „N beim Kauf“ nach, wenn du es kennst.</p>';
+  }
+  h+='<table class="ft"><tbody>'+e.fills.map(f=>'<tr><td>'+esc(f.d.split('-').reverse().join('.'))+'</td><td>'+f0(f.q)+' Stück zu '+(f.ec==='EUR'&&f.ev>0?f2(f.p)+' $ / '+f2(f.ev)+' €<br><span class="mut small">1 € = '+fd(f.ex,4)+' $ beim Kauf</span>':px(f.p))+'</td><td>'+(f.n>0?'N '+px(f.n):'')+'</td><td class="r"><button class="sm" data-delfill="'+esc(f.id)+'" aria-label="Kauf löschen">✕</button></td></tr>').join('')+'</tbody></table>';
+  h+='<div class="row" style="margin-top:6px">'+(!e.err&&!e.exit&&e.units<S.cfg.maxU?'<button class="sm" data-addto="'+esc(t)+'">Zukauf eintragen</button>':'')+'<button class="sm" data-delpos="'+esc(t)+'">Position entfernen</button></div></div>';
+  return h;
+}
+function rDepot(plan){
+  const el=$('#dlist'),sum=$('#dsum');
+  if(!EV.length){sum.textContent='Noch keine Positionen. Trage deinen ersten Kauf unten ein.';el.innerHTML='';return}
+  const full=eqFull();
+  const risk=EV.reduce((s,e)=>s+(e.risk||0),0),val=EV.reduce((s,e)=>s+(e.value||e.cost||0),0),pl=EV.reduce((s,e)=>s+(e.pl||0),0);
+  const H=HOLD,secs=[...new Set([...Object.keys(H.secU.L),...Object.keys(H.secU.S)])].sort();
+  sum.innerHTML=EV.length+' Position'+(EV.length>1?'en':'')+' · '+(H.dirU.L+H.dirU.S)+' Einheiten (Long '+H.dirU.L+' von '+S.cfg.maxDir+(H.dirU.S?', Short '+H.dirU.S:'')+') · Wert '+M(val)+(full>0?' ('+f0(val/full*100)+' % vom Depot)':'')+' · Risiko bis Stops '+M(risk)+(full>0?' ('+f2(risk/full*100)+' %)':'')+' · '+(pl>=0?'+':'')+M(pl)+' offen'+
+    (secs.length?'<br><span class="mut small">Sektoren (Long): '+secs.filter(s=>H.secU.L[s]).map(s=>esc(secName(s))+' '+H.secU.L[s]+'/'+S.cfg.maxSec).join(' · ')+'</span>':'');
+  const order={exit:0,add:1,ok:2},ev=EV.slice().sort((a,b)=>(order[a.status]??3)-(order[b.status]??3)||a.pos.t.localeCompare(b.pos.t));
+  el.innerHTML=ev.map(posCard).join('');
+}
+function newCard(c){
+  const {st,dir,pl}=c,L=dir>0,sys=pl.sys;
+  let h='<div class="card"><div class="top"><div><span class="tk">'+esc(st.t)+'</span>'+nameOf(st)+'</div><div>'+secBadge(st)+badgeSys(dir,sys)+(c.ok?'':'<span class="badge bad">nicht berücksichtigt</span>')+'</div></div>';
+  h+='<div class="kv">'+kv(L?'Kauf-Stop':'Verkaufs-Stop',px(pl.lvl))+kv('Kurs',px(st.p))+kv('Abstand',f2(pl.dist)+' N ('+f1(Math.abs(pl.lvl-st.p)/st.p*100)+' %)')+kv('N',px(st.N)+' ('+f1(st.N/st.p*100)+' %)')+kv('Stop (2 N)',px(pl.stop))+kv('Ausstieg '+(sys===1?10:20)+' Wochen',px(pl.exitL))+kv('Zukauf-Marke',px(pl.add))+'</div>';
+  if(sys===2&&pl.blocked)h+='<p class="note w">System 1 würde hier übersprungen: Der letzte System-1-Trade dieser Aktie ('+(L?'Long':'Short')+') war ein Gewinner. Einstieg deshalb erst an der 55-Wochen-Marke (System 2).</p>';
+  else if(sys===2&&pl.running)h+='<p class="note w">Ein gedachter System-1-Trade läuft seit '+dDE(pl.f.open)+' ('+(pl.f.taken?'nach den Regeln hättest du ihn gehandelt':'die Skip-Regel hätte ihn übersprungen')+'). Ein neuer Einstieg ist nur an der 55-Wochen-Marke möglich (System 2).</p>';
+  else if(sys===1&&pl.same)h+='<p class="note">Die 20-Wochen-Marke ist zugleich das 55-Wochen-Hoch (Tief).</p>';
+  if(c.ok&&c.sz)h+='<div class="box"><b>'+f0(c.sz.q)+' Stück</b> = 1 Einheit · Kosten '+M(c.sz.q*pl.lvl)+' · Risiko bis Stop '+M(c.sz.q*S.cfg.stop*st.N)+(eqFull()>0?' ('+f2(c.sz.q*S.cfg.stop*st.N/eqFull()*100)+' %)':'')+(c.sz.q<c.sz.want?'<br><span class="small">Verkleinert von '+f0(c.sz.want)+' Stück wegen: '+esc(c.sz.by)+'</span>':'')+'</div>';
+  else if(c.msgs&&c.msgs.length)h+='<div class="box bad">Gesperrt: '+esc(c.msgs.join('; '))+'</div>';
+  else if(c.sz&&c.sz.q<=0)h+='<div class="box w">Keine Einheit möglich: '+esc(c.sz.by||'zu klein')+'</div>';
+  h+='<div class="row" style="margin-top:6px"><button class="sm" data-buy="'+esc(st.t)+'|'+dir+'">Kauf eintragen</button></div></div>';
+  return h;
+}
+function rNew(plan,cands){
+  const el=$('#newlist');
+  if(!D){el.innerHTML='';return}
+  const ixs=[...new Set(D.stocks.flatMap(s=>s.ix||[]))];
+  $('#ixbox').innerHTML=ixs.map(k=>'<label><input type="checkbox" data-ix="'+k+'"'+(S.ixf[k]!==false?' checked':'')+'>'+esc(IXN[k]||k)+'</label>').join('');
+  $('#sort').value=S.sort;
+  if(!cands.length){el.innerHTML='<p class="mut">Keine Aktie liegt innerhalb von '+f1(S.cfg.near)+' N unter ihrer Einstiegsmarke (mit den aktuellen Filtern).</p>';return}
+  const ok=cands.filter(c=>c.ok),no=cands.filter(c=>!c.ok);
+  el.innerHTML='<p class="mut small" style="margin:0 0 6px">'+cands.length+' Kandidaten innerhalb von '+f1(S.cfg.near)+' N unter der Marke, davon '+ok.length+' im Orderzettel.</p>'+cands.map(newCard).join('');
+}
+function todayCard(st,dir,note,entry,Nuse,sys){
+  const L=dir>0,c=S.cfg,pl=entryPlan(st,dir);
+  const stop=entry-dir*c.stop*Nuse,sz=sizeFor(HOLD,Nuse,entry,st.t,Nuse);
+  let h='<div class="card"><div class="top"><div><span class="tk">'+esc(st.t)+'</span>'+nameOf(st)+'</div><div>'+secBadge(st)+badgeSys(dir,sys)+'</div></div>';
+  h+='<p class="note">'+note+'</p>';
+  h+='<div class="kv">'+kv('Einstieg ca.',px(entry))+kv('Kurs',px(st.p))+kv('N der Vorwoche',px(Nuse))+kv('Stop (2 N)',px(stop))+kv('Einheit',sz.q>0?f0(sz.q)+' Stück ('+M(sz.q*entry)+')':'–')+'</div>';
+  if(pl)h+='<p class="note mut">Wer nicht dabei ist: nächste Marke für eine Order am Montag '+px(pl.lvl)+' (System '+pl.sys+'), das ist '+f2(pl.dist)+' N entfernt.</p>';
+  h+='<div class="row" style="margin-top:6px"><button class="sm" data-buy="'+esc(st.t)+'|'+dir+'|'+sys+'|'+entry.toFixed(2)+'">Kauf eintragen</button></div></div>';
+  return h;
+}
+function rToday(){
+  const el=$('#todaylist');
+  if(!D){el.innerHTML='';return}
+  const held=new Set(S.pos.map(p=>p.t)),c=S.cfg,out=[];
+  const last=lastI();
+  for(const st of D.stocks){
+    if(held.has(st.t)||!(!st.ix||!st.ix.length||st.ix.some(k=>S.ixf[k]!==false)))continue;
+    if(st.p<c.minP||dvOf(st)<c.minDV*1e6)continue;
+    const Nprev=st.a[last-1]>0?st.a[last-1]:st.N;
+    for(const dir of c.short?[1,-1]:[1]){
+      const tg=dir>0?'L':'S',L=dir>0,o=st.o;
+      const has=k=>st.sg.includes(k+tg),sk=st.sk.includes('1'+tg);
+      let sys=0,note='';
+      const s1taken=has('1')||(!c.skip&&sk);
+      if(c.s1&&s1taken){sys=1;note='<b>System 1 ausgelöst:</b> Das '+(L?'Hoch':'Tief')+' brach die 20-Wochen-Marke.'}
+      else if(c.s2&&has('2')){sys=2;note=(c.s1&&sk?'<b>System 1 wurde übersprungen</b> (letzter System-1-Trade war ein Gewinner), aber das '+(L?'Hoch':'Tief')+' brach die 55-Wochen-Marke: <b>System 2 ausgelöst.</b>':'<b>System 2 ausgelöst:</b> Das '+(L?'Hoch':'Tief')+' brach die 55-Wochen-Marke.')}
+      else if(c.s1&&sk){out.push({st,dir,skipped:true});continue}
+      if(!sys)continue;
+      const lvl=priorLvl(st,sys===1?20:55,L);
+      if(isNaN(lvl))continue;
+      const entry=L?Math.max(o,lvl):Math.min(o,lvl);
+      out.push({st,dir,sys,note:note+' Marke '+px(lvl)+(entry!==lvl?', Kurslücke: Einstieg zur Eröffnung.':'.'),entry,Nprev});
+    }
+  }
+  if(!out.length){el.innerHTML='<p class="mut">In der letzten Woche ist bei keiner Aktie ein Ausbruch ausgelöst worden (mit den aktuellen Filtern).</p>';return}
+  const hit=out.filter(x=>!x.skipped).sort((a,b)=>a.sys-b.sys||a.st.t.localeCompare(b.st.t)),skp=out.filter(x=>x.skipped);
+  let h='<p class="mut small" style="margin:0 0 6px">'+hit.length+' ausgelöst'+(skp.length?', '+skp.length+(skp.length>1?' System-1-Ausbrüche':' System-1-Ausbruch')+' wegen der Skip-Regel übersprungen':'')+'. Hattest du eine Stop-Order im Markt, bist du schon drin und trägst den Kauf unten ein.</p>';
+  h+=hit.map(x=>todayCard(x.st,x.dir,x.note,x.entry,x.Nprev,x.sys)).join('');
+  if(skp.length)h+='<details style="margin-top:10px"><summary>Übersprungene System-1-Ausbrüche ('+skp.length+')</summary><p>'+skp.map(x=>esc(x.st.t)+(x.dir<0?' (Short)':'')).join(', ')+'. Der letzte System-1-Trade dieser Aktien war ein Gewinner. Ein Einstieg folgt erst über die 55-Wochen-Marke (System 2).</p></details>';
+  el.innerHTML=h;
+}
+const FIELDS=[
+ ['Depot',[['eq','Depotwert','n',{min:0,step:100}],['cur','Währung des Depotwerts','s',[['EUR','EUR'],['USD','USD']]],['fx','Wechselkurs, falls die Daten keinen enthalten (USD je 1 EUR)','n',{min:0,step:0.0001}],['cut','Rechendepot kürzen um (%), Drawdown-Regel unbestätigt','n',{min:0,max:100,step:1}]]],
+ ['Turtle-Regeln',[['risk','Risiko je Einheit (% vom Depot je 1 N). Original: 1','n',{min:0,step:0.05}],['stop','Stop (Vielfache von N)','n',{min:0.1,step:0.1}],['add','Zukauf alle (Vielfache von N)','n',{min:0.1,step:0.1}],['maxU','Max. Einheiten je Aktie','n',{min:1,step:1}],['maxSec','Max. Einheiten je Sektor und Richtung (0 = aus)','n',{min:0,step:1}],['maxDir','Max. Einheiten je Richtung (0 = aus)','n',{min:0,step:1}],['s1','System 1 (20/10 Wochen)','b'],['s2','System 2 (55/20 Wochen)','b'],['skip','Überspringen nach Gewinner (System 1)','b']]],
+ ['Aktien-Anpassungen',[['capPos','Max. Anteil einer Aktie am Depot (%, 0 = aus)','n',{min:0,step:1}],['maxInv','Max. Summe aller Positionen (% vom Depot, 0 = aus)','n',{min:0,step:5}],['short','Short-Signale zeigen','b'],['near','Orderliste: Marke höchstens … N entfernt','n',{min:0,step:0.1}],['minP','Mindestkurs für neue Einstiege (USD)','n',{min:0,step:1}],['minDV','Mindest-Tagesumsatz für neue Einstiege (Mio. USD)','n',{min:0,step:1}]]]
+];
+function rSettings(){
+  $('#settings').innerHTML=FIELDS.map(([t,fs])=>'<h3 style="margin-top:0">'+t+'</h3><div class="grid">'+fs.map(([k,l,ty,o])=>{
+    const v=S.cfg[k];
+    if(ty==='n')return '<label>'+esc(l)+'<input data-cfg="'+k+'" type="number" inputmode="decimal"'+Object.entries(o||{}).map(([a,b])=>' '+a+'="'+b+'"').join('')+' value="'+v+'"></label>';
+    if(ty==='b')return '<label>'+esc(l)+'<select data-cfg="'+k+'"><option value="1"'+(v?' selected':'')+'>An</option><option value="0"'+(!v?' selected':'')+'>Aus</option></select></label>';
+    return '<label>'+esc(l)+'<select data-cfg="'+k+'">'+o.map(([a,b])=>'<option value="'+a+'"'+(String(v)===a?' selected':'')+'>'+b+'</option>').join('')+'</select></label>';
+  }).join('')+'</div>').join('');
+}
+function render(){
+  rStatus();
+  if(!D){rSheet();rDepot();rNew(null,[]);rToday();return}
+  EV=S.pos.map(evalPos);HOLD=buildHold();
+  const cands=candidates(),plan=planAll(cands);
+  rSheet(plan);rDepot(plan);rNew(plan,cands);rToday();hcSync();
+}
+
+/* ---------- Eingaben ---------- */
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+const normT=t=>String(t||'').trim().toUpperCase().replace(/\./g,'-');
+const uid=()=>Math.random().toString(36).slice(2,9);
+const hcSync=()=>{
+  const e=$('#hc').value==='EUR',x=$('#hx');
+  $('#hxl').hidden=!e;
+  if(e&&(!(parseFloat(x.value)>0)||x.dataset.auto==='1')){x.value=fxr().toFixed(4);x.dataset.auto='1'}    // vorbelegt mit dem aktuellen Kurs, bis du ihn selbst änderst
+};
+function prefill(t,dir,sys,price,qty){
+  $('#ht').value=t;$('#hd').value=String(dir);$('#hs').value=String(sys);$('#hdate').value=today();
+  const eur=S.cfg.cur!=='USD';$('#hc').value=eur?'EUR':'USD';$('#hx').dataset.auto='';$('#hx').value='';hcSync();
+  $('#hp').value=price!=null?(eur?(+price/fxr()):+price).toFixed(2):'';$('#hq').value=qty||'';$('#hn').value='';
+  $('#addbox').open=true;$('#hmsg').textContent='';$('#addbox').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function addFill(){
+  const t=normT($('#ht').value),p0=parseFloat($('#hp').value),q=parseFloat($('#hq').value),n0=parseFloat($('#hn').value),d=$('#hdate').value||today();
+  const eur=$('#hc').value==='EUR',ex=eur?parseFloat($('#hx').value):1,p=p0*ex,n=n0*ex;
+  let dir=+$('#hd').value,sys=+$('#hs').value;
+  const m=x=>{$('#hmsg').textContent=x};
+  if(!t)return m('Bitte einen Ticker eintragen.');
+  if(!(p0>0)||!(q>0))return m('Kurs und Stück müssen größer als 0 sein.');
+  if(eur&&!(ex>0.3&&ex<3))return m('Bitte den Wechselkurs beim Kauf (USD je 1 EUR, etwa 1,10) eintragen.');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||isNaN(Date.parse(d)))return m('Bitte ein gültiges Datum wählen.');
+  let pos=S.pos.find(x=>x.t===t),note='';
+  if(pos){
+    if(pos.dir!==dir)return m('Für '+t+' besteht schon eine '+(pos.dir>0?'Long':'Short')+'-Position. Entferne sie zuerst, wenn du die Richtung wechseln willst.');
+    if(pos.sys!==sys)note=' (System '+pos.sys+' der bestehenden Position beibehalten)';
+  }else{pos={t,dir,sys,fills:[]};S.pos.push(pos)}
+  pos.fills.push(Object.assign({id:uid(),d,p:+p.toFixed(4),q,n:n>0?+n.toFixed(4):undefined},eur?{ec:'EUR',ev:p0,ex}:{}));
+  save();render();
+  m(t+': Kauf eingetragen'+note+'.');
+  $('#hp').value='';$('#hq').value='';$('#hn').value='';
+}
+function setCfg(k,el){
+  const ty=typeof DEF[k];
+  if(ty==='boolean')S.cfg[k]=el.value==='1';
+  else if(ty==='number'){const v=parseFloat(el.value);if(!isNaN(v))S.cfg[k]=v;else el.value=S.cfg[k]}
+  else S.cfg[k]=el.value;
+  save();render();
+}
+function setData(j){
+  if(!j||!Array.isArray(j.stocks)||!Array.isArray(j.dates)||!j.stocks.length||!j.asof)throw new Error('Die Datei hat nicht das erwartete Format.');
+  const s=j.stocks[0];
+  if(!Array.isArray(s.hh)||!Array.isArray(s.f)||!Array.isArray(s.a))throw new Error('Die Datei stammt nicht vom Turtle-Skript.');
+  D=j;BY={};j.stocks.forEach(x=>{BY[x.t]=x});
+}
+async function load(){
+  try{
+    setMsg('Lade Kursdaten …');
+    const r=await fetch('data/prices.json',{cache:'no-cache'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    setData(await r.json());
+    setMsg('Kursdaten geladen: '+D.stocks.length+' Aktien, Stand '+D.asof+'.');
+  }catch(e){setMsg('Kursdaten konnten nicht geladen werden ('+e.message+'). Auf GitHub Pages liegt die Datei neben der Seite; sonst lade eine prices.json von Hand.')}
+  render();
+}
+/* ---------- Sicherung ---------- */
+const bkObj=()=>({app:'tuw-screener',v:1,cfg:S.cfg,pos:S.pos,ixf:S.ixf});
+function bkApply(o){
+  if(!o||o.app!=='tuw-screener'||!Array.isArray(o.pos))throw new Error('Das ist keine Sicherung des TUW-Screeners.');
+  S.cfg=Object.assign({},DEF,o.cfg);S.ixf=Object.assign({SP500:true,NDX:true,R2000:true},o.ixf);
+  S.pos=o.pos.filter(p=>p&&p.t&&Array.isArray(p.fills)).map(p=>({t:normT(p.t),dir:p.dir<0?-1:1,sys:p.sys===2?2:1,fills:p.fills.filter(f=>f.q>0&&f.p>0&&/^\d{4}-\d{2}-\d{2}$/.test(f.d)).map(f=>Object.assign({id:f.id||uid(),d:f.d,p:+f.p,q:+f.q,n:f.n>0?+f.n:undefined},f.ec==='EUR'&&f.ev>0&&f.ex>0?{ec:'EUR',ev:+f.ev,ex:+f.ex}:{}))})).filter(p=>p.fills.length);
+  save();rSettings();render();
+}
+function init(){
+  rSettings();$('#hdate').value=today();
+  $('#hc').value=S.cfg.cur==='USD'?'USD':'EUR';$('#hc').onchange=hcSync;$('#hx').oninput=e=>{e.target.dataset.auto=''};hcSync();
+  document.addEventListener('change',e=>{
+    const t=e.target;
+    if(t.dataset&&t.dataset.cfg)setCfg(t.dataset.cfg,t);
+    else if(t.dataset&&t.dataset.ix){S.ixf[t.dataset.ix]=t.checked;save();render()}
+    else if(t.id==='sort'){S.sort=t.value;save();render()}
+  });
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const d=b.dataset;
+    if(d.buy!=null){const [t,dir,sys,price]=d.buy.split('|'),st=BY[t],pl=st&&entryPlan(st,+dir);
+      const s=+sys||(pl&&pl.sys)||1,pr=price?+price:(pl?pl.lvl:null),N=st?(price&&st.a[lastI()-1]>0?st.a[lastI()-1]:st.N):0;
+      prefill(t,+dir,s,pr,N?unitShares(N):'')}
+    else if(d.addto){const e2=EV.find(x=>x.pos.t===d.addto);if(e2)prefill(e2.pos.t,e2.d,e2.pos.sys,e2.addLvl,e2.st?unitShares(e2.st.N):'')}
+    else if(d.delpos){if(confirm(d.delpos+' aus dem Depot entfernen?')){S.pos=S.pos.filter(p=>p.t!==d.delpos);save();render()}}
+    else if(d.delfill){for(const p of S.pos)p.fills=p.fills.filter(f=>f.id!==d.delfill);S.pos=S.pos.filter(p=>p.fills.length);save();render()}
+  });
+  $('#hsave').onclick=addFill;
+  $('#reload').onclick=load;
+  $('#pfile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{setData(JSON.parse(t));setMsg('Datei geladen: '+D.stocks.length+' Aktien, Stand '+D.asof+'.');render()}).catch(err=>setMsg('Datei nicht lesbar: '+err.message))};
+  $('#bkx').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(bkObj(),null,1)],{type:'application/json'}));a.download='turtle-depot-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);$('#bkm').textContent='Sicherung heruntergeladen.'};
+  $('#bki').onclick=()=>$('#bkf').click();
+  $('#bkf').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{bkApply(JSON.parse(t));$('#bkm').textContent='Sicherung eingelesen: '+S.pos.length+' Positionen.'}).catch(err=>{$('#bkm').textContent='Import nicht möglich: '+err.message})};
+  $('#bkc').onclick=()=>{$('#bkt').value=JSON.stringify(bkObj());$('#bkm').textContent='Text erzeugt. Kopiere ihn und bewahre ihn auf.'};
+  $('#bkp').onclick=()=>{try{bkApply(JSON.parse($('#bkt').value));$('#bkm').textContent='Text eingelesen: '+S.pos.length+' Positionen.'}catch(err){$('#bkm').textContent='Import nicht möglich: '+err.message}};
+  load();
+}
+init();
+</script></body></html>
