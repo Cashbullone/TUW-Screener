@@ -1,0 +1,39 @@
+name: Sweep MN und MO (Konzentration, Risiko, Hebel)
+
+on:
+  workflow_dispatch:
+    inputs:
+      years:
+        description: "Jahre Kurshistorie (ohne den Vorlauf von 2 Jahren)"
+        default: "15"
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - name: Abhängigkeiten installieren
+        run: pip install -r scripts/requirements.txt
+      - name: Tests
+        run: |
+          python tests/test_core.py
+          python tests/test_backtest.py
+          python tests/test_screeners.py
+      - name: Backtest rechnen
+        run: python scripts/bt_sweep.py
+        env:
+          BT_OUT: backtest_out
+          BT_YEARS: ${{ inputs.years }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backtest-sweep
+          path: backtest_out/result_sweep.json

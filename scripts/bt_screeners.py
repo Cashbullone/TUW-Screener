@@ -104,7 +104,7 @@ def liquid(P, minp, mindv):
 # ---------------------------------------------------------------- MO
 MO_DEF = dict(equity=100000.0, cost=0.001, min_price=10.0, min_dv=20e6, max_pos=10, risk=0.25, cap=15.0, sec_max=3,
               buy_top=20.0, sell_top=30.0, fip_cut=50.0, stop=9.0, gap=0.15, market=True, brake=True, fip=True, wd=2,
-              brake_dd=10.0, brake_vix=30.0)
+              brake_dd=10.0, brake_vix=30.0, lev=1.0, borrow=0.05)
 
 
 def mo_features(P, rev):
@@ -210,6 +210,8 @@ def run_mo(P, F, M, rev, **kw):
     start = 260
     eq[:start] = p["equity"]
     for i in range(start, T):
+        if book.cash < 0:
+            book.cash *= 1 + p["borrow"] / 252
         # Orders von gestern zur Eröffnung
         for s in [s for s in book.pos if i > P["last"][s]]:
             book.sell(s, book.pos[s]["q"], C[s, P["last"][s]], i, P["tick"][s])
@@ -221,7 +223,7 @@ def run_mo(P, F, M, rev, **kw):
             for s, q in buys:
                 if s in book.pos or math.isnan(O[s, i]):
                     continue
-                q = min(q, math.floor(book.cash / (O[s, i] * (1 + p["cost"]))))
+                q = min(q, math.floor((book.cash + (p["lev"] - 1) * eq[i - 1]) / (O[s, i] * (1 + p["cost"]))))
                 book.buy(s, q, O[s, i], i)
             pending = None
         eq[i] = book.equity(Cf, i)
@@ -263,7 +265,7 @@ def run_mo(P, F, M, rev, **kw):
         invested = sum(book.pos[s]["q"] * Cf[s, i] for s in keep)
         blocked = p["market"] and mk["block"]
         level = round((0.5 if (p["market"] and mk["below"]) else 1.0) * (mk["f"] if p["brake"] else 1.0) * 100)
-        room = max(0.0, level / 100 * eqv - invested)
+        room = max(0.0, level / 100 * p["lev"] * eqv - invested)
         slots = p["max_pos"] - len(keep)
         buys = []
         if not blocked:
@@ -298,7 +300,7 @@ def run_mo(P, F, M, rev, **kw):
 # ---------------------------------------------------------------- MN
 MN_DEF = dict(equity=100000.0, cost=0.001, min_price=10.0, min_dv=20e6, risk=1.25, stop=7.5, max_pos_pct=25.0, np=10,
               rs_min=80, fresh=5, sw=15, sk=20.0, sn=1, sh=4, be=True, stages="25:10,35:20,45:30,60:40,100:100",
-              template_exit=True, swap=True)
+              template_exit=True, swap=True, lev=1.0, borrow=0.05)
 
 
 def mn_features(P, rev):
@@ -356,6 +358,8 @@ def run_mn(P, F, rev, **kw):
     eq[:start] = p["equity"]
     sp = p["stop"] / 100
     for i in range(start, T):
+        if book.cash < 0:
+            book.cash *= 1 + p["borrow"] / 252
         for s in [s for s in book.pos if i > P["last"][s]]:
             book.sell(s, book.pos[s]["q"], C[s, P["last"][s]], i, P["tick"][s])
         if pending:
@@ -372,7 +376,7 @@ def run_mn(P, F, rev, **kw):
             for s, q in [(b[0], b[1]) for b in buys] + [(x[1], x[2]) for x in swaps]:
                 if s in book.pos or math.isnan(O[s, i]):
                     continue
-                q = min(q, math.floor(book.cash / (O[s, i] * (1 + p["cost"]))))
+                q = min(q, math.floor((book.cash + (p["lev"] - 1) * eq[i - 1]) / (O[s, i] * (1 + p["cost"]))))
                 if q >= 1:
                     book.buy(s, q, O[s, i], i)
             pending = None
@@ -489,7 +493,7 @@ def run_mn(P, F, rev, **kw):
                 if q < 1:
                     continue
                 val = book.pos[h_s]["q"] * Cf[h_s, i]
-                if sum(x[2] * Cf[x[1], i] for x in swaps) + q * Cf[c_s, i] > eqv - heldAll + sum(book.pos[x[0]]["q"] * Cf[x[0], i] for x in swaps) + val:
+                if sum(x[2] * Cf[x[1], i] for x in swaps) + q * Cf[c_s, i] > p["lev"] * eqv - heldAll + sum(book.pos[x[0]]["q"] * Cf[x[0], i] for x in swaps) + val:
                     continue
                 swaps.append((h_s, c_s, q))
                 n_sw += 1
@@ -498,7 +502,7 @@ def run_mn(P, F, rev, **kw):
         keep = [s for s in hold if s not in swapped]
         held = heldAll - sum(book.pos[s]["q"] * Cf[s, i] for s in swapped)
         slots = max(0, p["np"] - len(keep))
-        room = max(0.0, eqv - held)
+        room = max(0.0, p["lev"] * eqv - held)
         tp = sum(x[2] * Cf[x[1], i] for x in swaps)
         buys = []
         for c_s, c_sc, c_rs, d_ in cands:

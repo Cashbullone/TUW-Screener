@@ -62,6 +62,25 @@ def test_mn_runs_and_accounts():
     print("ok    test_mn_runs_and_accounts  trades=%d offen=%d" % (len(r["closed"]), r["open"]))
 
 
+def test_leverage():
+    rev = bs.review_days(P["dates"])
+    F = bs.mn_features(P, rev)
+    r1 = bs.run_mn(P, F, rev, min_dv=0.0, min_price=1.0, risk=3.0, np=4, max_pos_pct=40.0)
+    r2 = bs.run_mn(P, F, rev, min_dv=0.0, min_price=1.0, risk=3.0, np=4, max_pos_pct=40.0, lev=2.0)
+    assert np.isfinite(r2["eq"]).all() and (r2["eq"] > 0).all()
+    assert not np.allclose(r1["eq"], r2["eq"]), "Hebel muss wirken"
+    # lev=1 ändert nichts gegenüber Standard
+    r0 = bs.run_mn(P, F, rev, min_dv=0.0, min_price=1.0, risk=3.0, np=4, max_pos_pct=40.0, lev=1.0, borrow=0.2)
+    assert np.allclose(r0["eq"], r1["eq"])
+    rev_w = bs.review_days(P["dates"], 2)
+    Fo = bs.mo_features(P, rev_w)
+    M = bs.market_state(P, SPX, VIX, rev_w, bs.MO_DEF)
+    a = bs.run_mo(P, Fo, M, rev_w, min_dv=0.0, min_price=1.0)
+    b = bs.run_mo(P, Fo, M, rev_w, min_dv=0.0, min_price=1.0, lev=2.0)
+    assert np.isfinite(b["eq"]).all() and not np.allclose(a["eq"], b["eq"])
+    print("ok    test_leverage")
+
+
 def test_clenow_matches_direct_regression():
     rev = bs.review_days(P["dates"], 2)
     F = bs.mo_features(P, rev)
