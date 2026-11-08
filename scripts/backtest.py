@@ -30,7 +30,7 @@ WARM = 57          # Wochen, bis die 55-Wochen-Marke vorliegt
 
 DEFAULTS = dict(equity=100000.0, risk=0.25, stop=2.0, add=0.5, max_units=4, max_sec=6, max_dir=12, cap_pos=25.0,
                 max_inv=100.0, s1=True, s2=True, skip=True, short=False, min_price=10.0, min_dv=20e6, cost=0.001,
-                mom_weeks=26)
+                mom_weeks=26, order="mom", seed=0)
 
 
 # ----------------------------------------------------------------- Datenaufbereitung
@@ -233,7 +233,10 @@ def run_backtest(P, I, s1_entries, **kw):
                 if sys_ and lvl is not None and not math.isnan(lvl):
                     m = I["mom"][s, i]
                     cands.append((d, s, sys_, lvl, N, 0.0 if math.isnan(m) else m))
-        cands.sort(key=lambda x: -x[0] * x[5])
+        if p["order"] == "random":
+            np.random.default_rng(p["seed"] * 100003 + i).shuffle(cands)
+        else:
+            cands.sort(key=lambda x: -x[0] * x[5])
         for d, s, sys_, lvl, N, m in cands:
             px = max(O[s, i], lvl) if d > 0 else min(O[s, i], lvl)
             q = room_ok(s, d, px, N)
@@ -328,7 +331,7 @@ SCENARIOS = [
     ("Risiko 1,0 % je Einheit", dict(risk=1.0, cap_pos=50.0)),
     ("Ohne Handelskosten", dict(cost=0.0)),
     ("Kosten 0,3 % je Seite", dict(cost=0.003)),
-]
+] + [("Zufallsauswahl bei Limits, Lauf %d" % k, dict(order="random", seed=k)) for k in range(1, 6)]
 
 
 def fmt_pct(x, d=1):
@@ -346,6 +349,21 @@ def report_text(rows, bench, P):
         s = b["stats"]
         lines.append("%-40s %9s %9s %9s %7.2f %7.2f" % (k, fmt_pct(s.get("total")), fmt_pct(s.get("cagr")), fmt_pct(s.get("maxdd")), s.get("sharpe", float("nan")), s.get("calmar", float("nan"))))
     return "\n".join(lines)
+
+
+def extra_text(rows, bench, best, worst, P):
+    L = ["", "Kalenderjahre (Standard | Risiko 1,0 % | SPY mit Dividenden | gleichgewichtetes Universum)"]
+    std, r1 = rows[0], rows[6]
+    spy = bench.get("S&P 500 (SPY, mit Dividenden)", {}).get("yearly", {})
+    ew = [v for k, v in bench.items() if k.startswith("Gleich")][0]["yearly"]
+    for y in sorted(std["yearly"]):
+        L.append("%d  %8s %8s %8s %8s" % (y, fmt_pct(std["yearly"].get(y)), fmt_pct(r1["yearly"].get(y)), fmt_pct(spy.get(y)), fmt_pct(ew.get(y))))
+    t = std["trades"]
+    L += ["", "Trades Standard: " + ", ".join("%s=%s" % (k, ("%.3f" % v if isinstance(v, float) else v)) for k, v in t.items())]
+    L.append("Zufallsauswahl (p. a.): " + ", ".join(fmt_pct(r["stats"].get("cagr")) for r in rows if r["name"].startswith("Zufall")))
+    L.append("Beste Trades: " + "; ".join("%s %s-%s %+.0f%%" % (b["t"], b["von"], b["bis"], b["ret"] * 100) for b in best))
+    L.append("Schlechteste: " + "; ".join("%s %s-%s %+.0f%%" % (b["t"], b["von"], b["bis"], b["ret"] * 100) for b in worst))
+    return "\n".join(L)
 
 
 def main():
@@ -408,6 +426,7 @@ def main():
     worst = sorted(std_res["closed"], key=lambda t: t["pnl"])[:10]
     pack = lambda t: dict(t=t["t"], sys=t["sys"], von=str(P["dates"][t["i_in"]].date()), bis=str(P["dates"][t["i_out"]].date()), units=t["units"], ret=round(t["ret"], 3), pnl=round(t["pnl"]))
     text = report_text(rows, bench, P)
+    text += extra_text(rows, bench, [pack(t) for t in best], [pack(t) for t in worst], P)
     print(text)
     out = dict(meta=dict(erstellt=pd.Timestamp.now().isoformat(), von=str(P["dates"][WARM - 1].date()), bis=str(P["dates"][-1].date()),
                          aktien=len(P["tick"]), fehlend=len(failed), kurs_von_spy=bool(spy is not None)),
@@ -417,8 +436,10 @@ def main():
                exposure=[round(float(x), 3) for x in std_res["gross"][WARM - 1:]], text=text)
     with open(os.path.join(OUT_DIR, "result.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, default=lambda o: None if isinstance(o, float) and not math.isfinite(o) else str(o))
-    print("RESULT_JSON_START")
-    print(json.dumps(out, ensure_ascii=False, separators=(",", ":"), default=str))
+    blob = json.dumps(out, ensure_ascii=False, separators=(",", ":"), default=str)
+    print("RESULT_JSON_START %d" % len(blob))
+    for k in range(0, len(blob), 800):          # kurze Zeilen, lange Zeilen verschluckt das GitHub-Log
+        print("BTJ %05d %s" % (k // 800, blob[k:k + 800]))
     print("RESULT_JSON_END")
     return 0
 
