@@ -300,7 +300,7 @@ def run_mo(P, F, M, rev, **kw):
 # ---------------------------------------------------------------- MN
 MN_DEF = dict(equity=100000.0, cost=0.001, min_price=10.0, min_dv=20e6, risk=1.25, stop=7.5, max_pos_pct=25.0, np=10,
               rs_min=80, fresh=5, sw=15, sk=20.0, sn=1, sh=4, be=True, stages="25:10,35:20,45:30,60:40,100:100",
-              template_exit=True, swap=True, lev=1.0, borrow=0.05)
+              template_exit=True, swap=True, lev=1.0, borrow=0.05, start=260, jit=0.0, seed=0)
 
 
 def mn_features(P, rev):
@@ -354,7 +354,8 @@ def run_mn(P, F, rev, **kw):
     nrev = {i: a for a, i in enumerate(rev)}
     pending = None
     npos = np.zeros(T)
-    start = 260
+    start = int(p["start"])
+    rng = np.random.default_rng(int(p["seed"]))
     eq[:start] = p["equity"]
     sp = p["stop"] / 100
     for i in range(start, T):
@@ -405,6 +406,7 @@ def run_mn(P, F, rev, **kw):
         if len(idx) < 50:
             continue
         sorted_raw = np.sort(raw[idx])
+        noise = rng.uniform(-p["jit"], p["jit"], S) if p["jit"] > 0 else np.zeros(S)
         n = len(idx)
 
         def rs_of(s):
@@ -416,7 +418,7 @@ def run_mn(P, F, rev, **kw):
         def score(s):
             r = rs_of(s)
             d = F["dist"][a][s]
-            return None if r is None or not np.isfinite(d) else round(.6 * r + .4 * max(0.0, 100 - 4 * d))
+            return None if r is None or not np.isfinite(d) else round(.6 * r + .4 * max(0.0, 100 - 4 * d)) + noise[s]
 
         eqv = eq[i]
         sells, parts, hold = [], [], []

@@ -81,6 +81,19 @@ def test_leverage():
     print("ok    test_leverage")
 
 
+def test_mn_start_and_jitter():
+    rev = bs.review_days(P["dates"])
+    F = bs.mn_features(P, rev)
+    a = bs.run_mn(P, F, rev, min_dv=0.0, min_price=1.0)
+    b = bs.run_mn(P, F, rev, min_dv=0.0, min_price=1.0, start=300)
+    assert np.allclose(b["eq"][:300], 100000.0) and np.isfinite(b["eq"]).all()
+    c1 = bs.run_mn(P, F, rev, min_dv=0.0, min_price=1.0, jit=8.0, seed=1)
+    c2 = bs.run_mn(P, F, rev, min_dv=0.0, min_price=1.0, jit=8.0, seed=1)
+    assert np.allclose(c1["eq"], c2["eq"]), "gleicher Seed, gleiches Ergebnis"
+    assert np.isfinite(c1["eq"]).all() and a["eq"].shape == c1["eq"].shape
+    print("ok    test_mn_start_and_jitter")
+
+
 def test_clenow_matches_direct_regression():
     rev = bs.review_days(P["dates"], 2)
     F = bs.mo_features(P, rev)
