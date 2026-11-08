@@ -8,6 +8,7 @@ Was die App zeigt:
 
 - **Orderzettel für Montag:** die Stop-Orders für die kommende Woche (Verkaufs-Stops, Zukäufe, neue Einstiege) mit Marke und Stückzahl.
 - **Depot:** deine Positionen, nachgespielt Woche für Woche. Die App meldet Stop und Ausstieg, die nächste Zukauf-Marke und das Risiko bis zum Stop.
+- **Live-Kurse im Depot (optional):** Mit einem kostenlosen Finnhub-Schlüssel (Feld unter „Kursdaten“, bleibt nur im Browser) zeigt das Depot Kurs, Wert und Gewinn in Echtzeit und warnt, wenn der Live-Kurs den Verkaufs-Stop erreicht oder die Zukauf-Marke berührt. Der Orderzettel bleibt bei den Wochenkerzen.
 - **Neue Einstiege:** Aktien, die kurz vor dem Ausbruch über das 20- oder 55-Wochen-Hoch stehen, mit Limits (je Aktie, Sektor, Richtung).
 - **In der letzten Woche ausgelöste Ausbrüche:** was in der abgeschlossenen Woche ausgelöst wurde, samt Skip-Regel von System 1.
 

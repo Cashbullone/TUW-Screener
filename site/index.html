@@ -75,6 +75,7 @@ a{color:var(--ok)}
 <section id="sheetsec"><h2>Orderzettel für Montag</h2><div id="sheet"></div></section>
 
 <section id="depotsec"><h2>Depot</h2>
+<div id="liveb" class="small mut" style="margin:0 0 10px"></div>
 <p id="dsum" class="sum"></p>
 <div id="dlist"></div>
 <details id="addbox" style="margin-top:12px"><summary>Kauf eintragen</summary>
@@ -105,7 +106,9 @@ a{color:var(--ok)}
 
 <section><h2>Kursdaten</h2>
 <div class="row" style="margin-top:0"><button id="reload" class="pri">Daten neu laden</button></div>
-<p class="mut small">Die Seite holt die täglich von GitHub aktualisierten Daten selbst. Eine <code>prices.json</code> kannst du auch von Hand laden (zum Beispiel zum Testen):</p>
+<p class="mut small">Die Seite holt die jeden Freitagabend von GitHub aktualisierten Wochendaten selbst. Eine <code>prices.json</code> kannst du auch von Hand laden (zum Beispiel zum Testen):</p>
+<label style="max-width:360px">Finnhub-Schlüssel (Live-Kurse)<input id="fk" type="password" autocomplete="off" spellcheck="false" placeholder="kostenlos auf finnhub.io"></label>
+<p class="mut small" style="margin:6px 0 14px">Live-Kurse für dein Depot kommen von Finnhub. Dafür legst du auf finnhub.io ein kostenloses Konto an und trägst den „API Key“ hier ein. Er bleibt nur in diesem Browser und ist nicht in der Depot-Sicherung enthalten. Die Live-Kurse ändern nur die Anzeige im Depot (Kurs, Wert, Gewinn, Hinweise zu Stop und Zukauf). Der Orderzettel bleibt bei den Wochenkerzen bis zum Freitagsschluss.</p>
 <label style="max-width:360px">prices.json laden<input id="pfile" type="file" accept=".json,application/json"></label>
 <p id="msg" class="mut small" role="status" style="margin:10px 0 0"></p></section>
 
@@ -145,8 +148,9 @@ a{color:var(--ok)}
 const $=s=>document.querySelector(s),K='turtle_w1';
 const DEF={eq:50000,cur:'EUR',fx:1.08,cut:0,risk:0.25,stop:2,add:0.5,maxU:4,maxSec:6,maxDir:12,capPos:25,maxInv:100,s1:true,s2:true,skip:true,short:false,near:1,minP:10,minDV:20};
 let S={cfg:Object.assign({},DEF),pos:[],ixf:{SP500:true,NDX:true,R2000:true},sort:'dist'};
-try{const o=JSON.parse(localStorage.getItem(K)||'null');if(o){S.cfg=Object.assign({},DEF,o.cfg);S.pos=Array.isArray(o.pos)?o.pos:[];S.ixf=Object.assign(S.ixf,o.ixf);S.sort=o.sort||'dist'}}catch(e){}
-const save=()=>{try{localStorage.setItem(K,JSON.stringify({cfg:S.cfg,pos:S.pos,ixf:S.ixf,sort:S.sort}))}catch(e){}};
+try{const o=JSON.parse(localStorage.getItem(K)||'null');if(o){S.cfg=Object.assign({},DEF,o.cfg);S.pos=Array.isArray(o.pos)?o.pos:[];S.ixf=Object.assign(S.ixf,o.ixf);S.sort=o.sort||'dist';S.fk=typeof o.fk==='string'?o.fk:''}}catch(e){}
+try{if(!S.fk){const m=JSON.parse(localStorage.getItem('mvn1')||'null');if(m&&typeof m.fk==='string')S.fk=m.fk.trim()}}catch(e){}   // gleiche Adresse wie der MN-Screener: dessen Finnhub-Schlüssel wird einmal übernommen
+const save=()=>{try{localStorage.setItem(K,JSON.stringify({cfg:S.cfg,pos:S.pos,ixf:S.ixf,sort:S.sort,fk:S.fk||''}))}catch(e){}};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fd=(n,d)=>Number(n).toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
 const f2=n=>fd(n,2),f1=n=>fd(n,1),f0=n=>fd(n,0);
@@ -160,10 +164,11 @@ const SECDE={'Communication Services':'Kommunikation','Consumer Discretionary':'
 const secName=k=>k?(SECDE[k]||k):'Sektor unbekannt';
 const IXN={SP500:'S&P 500',NDX:'Nasdaq-100 (ohne S&P-Werte)',R2000:'Russell 2000'};
 let D=null,BY={},EV=[],HOLD=null;
+const LIVE={p:{},fx:null,at:0,err:'',busy:false,bad:[]};
 const setMsg=t=>{$('#msg').textContent=t};
 
 /* ---------- Geld und Größen ---------- */
-const fxr=()=>(D&&D.fx>0)?D.fx:(S.cfg.fx>0?S.cfg.fx:1.08);
+const fxr=()=>LIVE.fx>0?LIVE.fx:(D&&D.fx>0)?D.fx:(S.cfg.fx>0?S.cfg.fx:1.08);
 const toUsd=v=>S.cfg.cur==='EUR'?v*fxr():v;
 const fromUsd=v=>S.cfg.cur==='EUR'?v/fxr():v;
 const M=v=>f0(fromUsd(v))+(S.cfg.cur==='EUR'?' €':' $');
@@ -214,7 +219,7 @@ function evalPos(pos){
   const n=D.dates.length,last=n-1,kOut=pos.sys===1?10:20,sm=+S.cfg.stop;
   const fi=fills.map(f=>dayIdx(f.d)),fn=fills.map((f,j)=>fillN(st,f,fi[j]));
   o.fi=fi;o.fn=fn;o.approx=fn.some(x=>x.approx);o.kOut=kOut;
-  o.price=st.p;o.value=o.q*st.p;
+  const lv=LIVE.p[pos.t];o.live=lv&&lv.p>0?lv:null;o.price=o.live?o.live.p:st.p;o.value=o.q*o.price;
   {const plE=(o.value/fxr()-o.costE)*d;o.pl=plE*fxr();o.plp=o.costE?plE/o.costE*100:0}   // Gewinn inklusive Wechselkurseffekt bei EUR-Käufen (in USD zum heutigen Kurs, die Anzeige rechnet in die Depotwährung um)
   for(let i=Math.max(fi[0]+1,1);i<n;i++){
     let j=-1;for(let q=0;q<fills.length;q++)if(fi[q]<i)j=q;
@@ -235,6 +240,8 @@ function evalPos(pos){
   o.addLvl=fills[j].p+d*S.cfg.add*Nl;
   o.addHit=fi[j]<last&&(L?st.h[last]>=o.addLvl:st.l[last]<=o.addLvl);
   o.risk=Math.max(0,fills.reduce((s,f)=>s+f.q*(f.p-o.stop)*d,0));
+  o.liveSell=!!(o.live&&!o.exit&&(L?o.price<=o.sell:o.price>=o.sell));
+  o.liveAdd=!!(o.live&&!o.exit&&!o.liveSell&&(L?o.price>=o.addLvl:o.price<=o.addLvl));
   o.status=o.exit?'exit':(o.addHit&&o.units<S.cfg.maxU?'add':'ok');
   return o;
 }
@@ -344,17 +351,73 @@ function rSheet(plan){
   if(plan.rej.length)h+='<p class="mut small" style="margin:10px 0 0">Nicht berücksichtigt wegen Limits oder zu kleiner Einheit: '+plan.rej.length+' Aktie'+(plan.rej.length>1?'n':'')+' (Gründe in der Liste „Neue Einstiege“).</p>';
   box.innerHTML=h;
 }
+/* ---------- Live-Kurse (Finnhub) ---------- */
+const fk=()=>(S.fk||'').trim();
+async function fh(path){
+  const r=await fetch('https://finnhub.io/api/v1/'+path+(path.includes('?')?'&':'?')+'token='+encodeURIComponent(fk()));
+  if(r.status===401||r.status===403){const e=new Error('key');e.code='key';throw e}
+  if(r.status===429){const e=new Error('limit');e.code='limit';throw e}
+  if(!r.ok)throw new Error('http '+r.status);
+  return r.json();
+}
+const liveTickers=()=>[...new Set(S.pos.map(p=>p.t))];
+function renderLive(){
+  const el=$('#liveb');if(!el)return;
+  const btn=' <button type="button" data-live style="padding:2px 10px;font-weight:400"'+(LIVE.busy?' disabled':'')+'>Jetzt aktualisieren</button>';
+  if(!fk()){el.innerHTML='Live-Kurse aus. Trage unter „Kursdaten“ deinen kostenlosen Finnhub-Schlüssel ein, dann zeigt das Depot Kurse in Echtzeit.';return}
+  if(!liveTickers().length){el.innerHTML='Live-Kurse bereit, sobald Positionen im Depot sind.';return}
+  let h;
+  if(LIVE.busy)h='Hole Live-Kurse …';
+  else if(LIVE.err==='key')h='<span style="color:var(--bad)">Der Finnhub-Schlüssel wird nicht akzeptiert.</span> Prüfe ihn unter „Kursdaten“.';
+  else if(LIVE.err==='limit')h='<span style="color:var(--warn)">Abruflimit von Finnhub erreicht.</span> Der nächste Versuch folgt in einer Minute.'+btn;
+  else if(LIVE.err==='net')h='<span style="color:var(--warn)">Live-Kurse nicht abrufbar</span> (keine Verbindung oder vom Browser blockiert). Es gelten die Kurse der letzten Wochenkerze.'+btn;
+  else if(LIVE.at){
+    const ts=Object.values(LIVE.p).map(x=>x.t).filter(Boolean),last=ts.length?Math.max(...ts):0,age=last?(Date.now()/1000-last)/60:0;
+    h='<span style="color:var(--ok)">●</span> Live-Kurse, abgerufen um '+new Date(LIVE.at).toLocaleTimeString('de-DE')+(age>20?' (letzter Handel '+new Date(last*1000).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+', die Börse ist vermutlich geschlossen)':'')+'.'+(LIVE.bad.length?' Kein Live-Kurs für '+LIVE.bad.map(esc).join(', ')+'.':'')+btn;
+  }else h='Noch kein Live-Kurs abgerufen.'+btn;
+  el.innerHTML=h;
+}
+async function liveFetch(){
+  if(LIVE.busy||!fk())return renderLive();
+  const ts=liveTickers();
+  if(!ts.length)return renderLive();
+  LIVE.busy=true;LIVE.err='';renderLive();
+  let ok=0;const bad=[];
+  try{
+    const res=await Promise.all(ts.map(t=>fh('quote?symbol='+encodeURIComponent(t.replace(/-/g,'.'))).then(j=>({t,j})).catch(e=>({t,e}))));
+    for(const x of res){
+      if(x.e){if(x.e.code==='key'||x.e.code==='limit')LIVE.err=x.e.code;else bad.push(x.t);continue}
+      if(x.j&&x.j.c>0){LIVE.p[x.t]={p:x.j.c,dp:x.j.dp,pc:x.j.pc,t:x.j.t};ok++}else bad.push(x.t);
+    }
+    if(!LIVE.err){
+      try{const r=await fh('forex/rates?base=EUR'),u=r&&r.quote&&r.quote.USD;if(u>0.5&&u<2)LIVE.fx=u}catch(e){}
+    }
+    if(ok)LIVE.at=Date.now();
+    LIVE.bad=bad;
+    if(!ok&&!LIVE.err)LIVE.err='net';
+  }finally{LIVE.busy=false}
+  render();
+}
+let liveT=null;
+function liveStart(){
+  clearInterval(liveT);
+  liveT=setInterval(()=>{if(!document.hidden&&fk())liveFetch()},60000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&fk()&&Date.now()-LIVE.at>30000)liveFetch()});
+  liveFetch();
+}
 function posCard(e){
   const t=e.pos.t,st=e.st;
   let h='<div class="card" data-t="'+esc(t)+'"><div class="top"><div><span class="tk">'+esc(t)+'</span>'+(st?nameOf(st):'')+'</div><div>'+(st?secBadge(st):'')+badgeSys(e.d,e.pos.sys)+'<span class="badge">'+e.units+' von '+S.cfg.maxU+' Einheiten</span>'+
     (e.status==='exit'?'<span class="badge bad">Ausstieg</span>':e.status==='add'?'<span class="badge w">Zukauf möglich</span>':e.err?'<span class="badge w">ohne Kurse</span>':'<span class="badge ok">gehalten</span>')+'</div></div>';
   if(e.err){h+='<p class="note w">'+esc(e.err)+'. Die Position zählt mit ihrem Kaufwert.</p>'}
   else{
-    h+='<div class="kv">'+kv('Kurs',px(e.price))+kv('Ø Kaufkurs',f2(e.avg)+' $ / '+f2(e.costE/e.q)+' €')+kv('Gewinn/Verlust',(e.pl>=0?'+':'')+M(e.pl)+' ('+(e.plp>=0?'+':'')+f1(e.plp)+' %)')+kv('Wert',M(e.value))+kv('N aktuell',px(st.N))+'</div>';
+    h+='<div class="kv">'+kv(e.live?'Kurs live':'Kurs',px(e.price)+(e.live&&e.live.dp!=null?' <span style="color:var('+(e.live.dp>=0?'--ok':'--bad')+')">'+(e.live.dp>=0?'+':'')+f2(e.live.dp)+' %</span>':''))+kv('Ø Kaufkurs',f2(e.avg)+' $ / '+f2(e.costE/e.q)+' €')+kv('Gewinn/Verlust',(e.pl>=0?'+':'')+M(e.pl)+' ('+(e.plp>=0?'+':'')+f1(e.plp)+' %)')+kv('Wert',M(e.value))+kv('N aktuell',px(st.N))+'</div>';
     if(e.exit)h+='<div class="box bad"><b>Ausstieg ausgelöst am '+dDE(e.exit.date)+'.</b> '+(e.L?'Das Tief':'Das Hoch')+' berührte '+px(e.exit.lvl)+' ('+(e.exit.why==='stop'?'2-N-Stop':'Ausstiegsmarke '+e.kOut+' Wochen')+'). Verkaufe, falls noch nicht geschehen, und entferne die Position unten.</div>';
     else{
       h+='<div class="kv">'+kv(e.L?'Verkaufs-Stop Montag':'Rückkauf-Stop Montag',px(e.sell))+kv('2-N-Stop',px(e.stop))+kv('Ausstieg '+e.kOut+' Wochen',px(e.chan))+kv('Zukauf-Marke',e.units>=S.cfg.maxU?'Maximum erreicht':px(e.addLvl))+kv('Risiko bis Stop',e.risk>0?M(e.risk)+' ('+f2(e.risk/(eqFull()||1)*100)+' %)':'Gewinn gesichert')+'</div>';
       h+='<p class="note">Der Stop hängt am letzten Kauf ('+px(e.fills[e.fills.length-1].p)+', N = '+px(e.Nl)+').'+(e.sellWhy==='chan'?' Jetzt bestimmt der Ausstieg über '+e.kOut+' Wochen die Verkaufsmarke.':'')+'</p>';
+      if(e.liveSell)h+='<div class="box bad"><b>Der Live-Kurs liegt an oder unter der '+(e.L?'Verkaufs-':'Rückkauf-')+'Marke '+px(e.sell)+'.</b> Prüfe, ob deine Stop-Order gefüllt wurde. Wenn nicht, verkaufe jetzt.</div>';
+      else if(e.liveAdd)h+='<div class="box w"><b>Der Live-Kurs hat die Zukauf-Marke '+px(e.addLvl)+' erreicht.</b> '+(e.units>=S.cfg.maxU?'Die Obergrenze von '+S.cfg.maxU+' Einheiten ist erreicht.':e.add&&e.add.msgs&&e.add.msgs.length?'Gesperrt: '+esc(e.add.msgs.join('; ')):'Die Order steht im Orderzettel.')+'</div>';
       if(e.addHit)h+='<div class="box w"><b>Zukauf-Marke '+px(e.addLvl)+' wurde in der letzten Woche erreicht.</b> '+(e.units>=S.cfg.maxU?'Die Obergrenze von '+S.cfg.maxU+' Einheiten ist erreicht.':e.add&&e.add.msgs&&e.add.msgs.length?'Gesperrt: '+esc(e.add.msgs.join('; ')):'Die nächste Marke steht im Orderzettel.')+'</div>';
       else if(e.add&&e.add.msgs&&e.add.msgs.length)h+='<p class="note w">Zukauf bei '+px(e.addLvl)+' gesperrt: '+esc(e.add.msgs.join('; '))+'</p>';
       else if(e.add&&e.add.sz&&e.add.sz.q<=0)h+='<p class="note w">Zukauf bei '+px(e.addLvl)+' nicht möglich: '+esc(e.add.sz.by||'Einheit zu klein')+'</p>';
@@ -455,7 +518,7 @@ function rSettings(){
   }).join('')+'</div>').join('');
 }
 function render(){
-  rStatus();
+  rStatus();renderLive();
   if(!D){rSheet();rDepot();rNew(null,[]);rToday();return}
   EV=S.pos.map(evalPos);HOLD=buildHold();
   const cands=candidates(),plan=planAll(cands);
@@ -492,7 +555,7 @@ function addFill(){
     if(pos.sys!==sys)note=' (System '+pos.sys+' der bestehenden Position beibehalten)';
   }else{pos={t,dir,sys,fills:[]};S.pos.push(pos)}
   pos.fills.push(Object.assign({id:uid(),d,p:+p.toFixed(4),q,n:n>0?+n.toFixed(4):undefined},eur?{ec:'EUR',ev:p0,ex}:{}));
-  save();render();
+  save();render();liveFetch();
   m(t+': Kauf eingetragen'+note+'.');
   $('#hp').value='';$('#hq').value='';$('#hn').value='';
 }
@@ -547,6 +610,9 @@ function init(){
     else if(d.delfill){for(const p of S.pos)p.fills=p.fills.filter(f=>f.id!==d.delfill);S.pos=S.pos.filter(p=>p.fills.length);save();render()}
   });
   $('#hsave').onclick=addFill;
+  $('#fk').value=S.fk||'';
+  $('#fk').onchange=e=>{S.fk=e.target.value.trim();save();LIVE.p={};LIVE.fx=null;LIVE.at=0;LIVE.err='';render();liveFetch()};
+  $('#liveb').addEventListener('click',e=>{if(e.target.closest('[data-live]'))liveFetch()});
   $('#reload').onclick=load;
   $('#pfile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{setData(JSON.parse(t));setMsg('Datei geladen: '+D.stocks.length+' Aktien, Stand '+D.asof+'.');render()}).catch(err=>setMsg('Datei nicht lesbar: '+err.message))};
   $('#bkx').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(bkObj(),null,1)],{type:'application/json'}));a.download='turtle-depot-'+today()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);$('#bkm').textContent='Sicherung heruntergeladen.'};
@@ -555,6 +621,7 @@ function init(){
   $('#bkc').onclick=()=>{$('#bkt').value=JSON.stringify(bkObj());$('#bkm').textContent='Text erzeugt. Kopiere ihn und bewahre ihn auf.'};
   $('#bkp').onclick=()=>{try{bkApply(JSON.parse($('#bkt').value));$('#bkm').textContent='Text eingelesen: '+S.pos.length+' Positionen.'}catch(err){$('#bkm').textContent='Import nicht möglich: '+err.message}};
   load();
+  liveStart();
 }
 init();
 </script></body></html>
