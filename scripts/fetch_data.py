@@ -276,7 +276,7 @@ def split_batch(df, batch):
     return out
 
 
-def download(tickers):
+def download(tickers, period="3y", start=None):
     import yfinance as yf
 
     raw, failed = {}, []
@@ -285,8 +285,9 @@ def download(tickers):
         got = {}
         for attempt in range(3):
             try:
-                df = yf.download(batch, period="3y", interval="1d", group_by="ticker",
-                                 auto_adjust=False, threads=True, progress=False, timeout=30)
+                span = {"start": start} if start else {"period": period}
+                df = yf.download(batch, interval="1d", group_by="ticker", auto_adjust=False,
+                                 threads=True, progress=False, timeout=30, **span)
                 got = split_batch(df, batch)
                 if got:
                     break
