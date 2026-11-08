@@ -30,7 +30,7 @@ WARM = 57          # Wochen, bis die 55-Wochen-Marke vorliegt
 
 DEFAULTS = dict(equity=100000.0, risk=0.25, stop=2.0, add=0.5, max_units=4, max_sec=6, max_dir=12, cap_pos=25.0,
                 max_inv=100.0, s1=True, s2=True, skip=True, short=False, min_price=10.0, min_dv=20e6, cost=0.001,
-                mom_weeks=26, order="mom", seed=0)
+                mom_weeks=26, order="mom", seed=0, dv_win=10, dv_div=5.0)
 
 
 # ----------------------------------------------------------------- Datenaufbereitung
@@ -80,7 +80,7 @@ def indicators(P, p):
         I["ll20"][s, sl] = tc.prev(tc.roll_min(l, tc.S2_OUT))
         I["ll55"][s, sl] = tc.prev(tc.roll_min(l, tc.S2_IN))
         I["mom"][s, sl] = tc.prev(c / np.concatenate((np.full(p["mom_weeks"], np.nan), c[:-p["mom_weeks"]])) - 1)
-        I["dv"][s, sl] = tc.prev(pd.Series(v * c).rolling(10).mean().to_numpy() / 5)     # Umsatz je Handelstag, Mittel der letzten 10 Wochen
+        I["dv"][s, sl] = tc.prev(pd.Series(v * c).rolling(p["dv_win"]).mean().to_numpy() / p["dv_div"])     # Umsatz je Handelstag, Mittel der letzten 10 Wochen
         for side in (1, -1):
             trades, pos, _ = tc.sim_side(o, h, l, n, tc.S1_IN, tc.S1_OUT, side, p["stop"])
             for t in trades + ([pos] if pos else []):
