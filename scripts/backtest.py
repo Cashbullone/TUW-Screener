@@ -90,7 +90,7 @@ def indicators(P, p):
 
 
 # ----------------------------------------------------------------- Simulation
-def run_backtest(P, I, s1, **kw):
+def run_backtest(P, I, s1_entries, **kw):
     p = dict(DEFAULTS, **kw)
     S, T = len(P["tick"]), len(P["dates"])
     O, H, L, C = P["O"], P["H"], P["L"], P["C"]
@@ -223,7 +223,7 @@ def run_backtest(P, I, s1, **kw):
                 continue
             for d in dirs:
                 sys_, lvl = 0, None
-                if p["s1"] and i in s1[d][s]:
+                if p["s1"] and i in s1_entries[d][s]:
                     sys_ = 1
                     lvl = I["hh20"][s, i] if d > 0 else I["ll20"][s, i]
                 if not sys_ and p["s2"]:

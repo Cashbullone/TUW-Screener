@@ -94,6 +94,14 @@ def test_costs_reduce_result():
     print("ok    test_costs_reduce_result")
 
 
+def test_all_scenarios_run():
+    P, I, s1 = panel_for({"UP": weekly_frame(trend_then_crash()), "FLAT": weekly_frame([100 + (i % 2) for i in range(124)])})
+    for name, kw in bt.SCENARIOS:
+        r = bt.run_backtest(P, I, s1, **kw)
+        assert np.isfinite(r["eq"]).all(), name
+    print("ok    test_all_scenarios_run")
+
+
 def test_stats():
     eq = np.array([100.0, 110.0, 99.0, 120.0] * 20)
     d = pd.date_range("2020-01-03", periods=len(eq), freq="W-FRI")
